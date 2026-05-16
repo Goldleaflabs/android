@@ -1,0 +1,130 @@
+package com.goldleaf.feature.farmermanagement.ui.viewmodels
+
+import android.util.Log
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.goldleaf.core.auth.UserSessionManager
+import com.goldleaf.core.data.dto.farm.Farm
+import com.goldleaf.core.data.dto.farm.FarmerDashboardData
+import com.goldleaf.core.data.local.FarmerEntity
+import com.goldleaf.feature.farmermanagement.domain.repository.FarmerRepository
+import com.goldleaf.feature.farmermanagement.ui.dashboard.DashboardFarmer
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+// Define it here so it's scoped only to this screen
+data class ListFarmer(
+    val id: String,
+    val name: String
+)
+
+@HiltViewModel
+class FarmSelectionViewModel @Inject constructor(
+    private val farmerRepository: FarmerRepository,
+    private val userSession: UserSessionManager
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(FarmSelectionUiState())
+    val uiState: StateFlow<FarmSelectionUiState> = _uiState.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val currentFarmer: StateFlow<ListFarmer?> = combine(
+        userSession.currentFarmer,
+        userSession.userRole
+    ) { entity, _ ->
+        // If entity is null, the whole thing is null
+        entity?.let {
+            ListFarmer(
+                id = it.id,
+                name = it.name
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
+
+    init {
+        // 2. Automatically trigger load when the ID becomes available
+        viewModelScope.launch {
+            currentFarmer.collect { farmer ->
+                if (farmer != null) {
+                    if (!farmer.id.isNullOrBlank()) {
+                        loadFarms(farmer.id)
+                    }
+                }
+            }
+        }
+    }
+
+
+    fun loadFarms(farmerId: String) {
+        if (farmerId.isBlank()) {
+            Log.e("FarmSelectionViewModel", "❌ loadFarms called with blank farmerId")
+            _uiState.update { it.copy(error = "Invalid farmer ID") }
+            return
+        }
+
+        Log.d("FarmSelectionViewModel", "📥 loadFarms: Starting to load farms for farmerId='$farmerId'")
+        viewModelScope.launch {
+            // Only show loading if we don't have data yet (local-first approach)
+            if (_uiState.value.farms.isEmpty()) {
+                Log.d("FarmSelectionViewModel", "📥 loadFarms: No local data, setting isLoading=true")
+                _uiState.update { it.copy(isLoading = true, error = null) }
+            }
+
+            try {
+                Log.d("FarmSelectionViewModel", "📥 loadFarms: Collecting farms from repository...")
+                farmerRepository.getFarmerFarms(farmerId)
+                    .catch { e ->
+                        Log.e("FarmSelectionViewModel", "❌ loadFarms: Error collecting farms", e)
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = e.message ?: "Failed to load farms"
+                            )
+                        }
+                    }
+                    .collectLatest { farms ->
+                        Log.d("FarmSelectionViewModel", "📥 loadFarms: Received ${farms.size} farms, updating UI")
+                        _uiState.update {
+                            it.copy(
+                                farms = farms,
+                                isLoading = false,
+                                error = null
+                            )
+                        }
+                    }
+            } catch (e: Exception) {
+                Log.e("FarmSelectionViewModel", "❌ loadFarms: Unexpected exception", e)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Unknown error"
+                    )
+                }
+            }
+        }
+    }
+
+    fun refreshFarms(farmerId: String) {
+        Log.d("FarmSelectionViewModel", "🔄 refreshFarms: Starting refresh for farmerId='$farmerId'")
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            loadFarms(farmerId)
+            _uiState.update { it.copy(isRefreshing = false) }
+        }
+    }
+}
+
+data class FarmSelectionUiState(
+    val farms: List<Farm> = emptyList(),
+    val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val error: String? = null
+)

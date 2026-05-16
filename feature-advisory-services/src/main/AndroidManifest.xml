@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internet permission for AI API calls -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Camera permission for plant disease/pest detection -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Storage permissions for image processing -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+</manifest>
