@@ -14,6 +14,7 @@ import com.goldleaf.core.data.local.FarmerEntity
 import com.goldleaf.core.data.local.ProductBatchEntity
 import com.goldleaf.core.data.local.CropEntity
 import com.goldleaf.core.data.local.CropStatus
+import com.goldleaf.core.data.pipeline.PipelineRepository
 import com.goldleaf.feature.cropmanagement.domain.repository.CropRepository
 import com.goldleaf.feature.cropmanagement.ui.selection.OfficerRepository
 import com.goldleaf.feature.cropmanagement.ui.selection.SmsWhatsappNotifier
@@ -50,7 +51,8 @@ class BatchViewModel @Inject constructor(
     private val cropRepository: CropRepository,
     private val officerRepository: OfficerRepository,
     private val userSession: UserSession,
-    private val notifier: SmsWhatsappNotifier
+    private val notifier: SmsWhatsappNotifier,
+    private val pipelineRepository: PipelineRepository
 ) : ViewModel() {
 
     // -----------------------------
@@ -124,6 +126,9 @@ class BatchViewModel @Inject constructor(
 
         Log.d(TAG, "📦 Loading data for farmer: $id")
 
+        // Refresh pipeline definition from server
+        pipelineRepository.refresh()
+
         // Sync batches from server first (populates local database)
         batchRepository.syncBatches(id).onFailure { e ->
             Log.w(TAG, "⚠️ Failed to sync batches from server: ${e.message}")
@@ -195,11 +200,20 @@ class BatchViewModel @Inject constructor(
     // -----------------------------
     private suspend fun loadReadyCropsForFarmer(farmerId: String) {
         Log.d(TAG, "🌱 Loading crops for farmer: $farmerId")
-        val crops = cropRepository.getCropsByStatusAndFarmer(
-            listOf(CropStatus.GROWING, CropStatus.PLANNED),
-            farmerId
-        )
-        Log.d(TAG, "🌾 Found ${crops.size} ready crops for farmer $farmerId")
+        val harvestStageId = pipelineRepository.getHarvestStageId()
+        val crops = if (harvestStageId != null) {
+            val allCrops = cropRepository.getCropsByStatusAndFarmer(
+                listOf(CropStatus.GROWING, CropStatus.PLANNED, CropStatus.HARVESTED),
+                farmerId
+            )
+            allCrops.filter { it.pipelineStageId == harvestStageId }
+        } else {
+            cropRepository.getCropsByStatusAndFarmer(
+                listOf(CropStatus.HARVESTED),
+                farmerId
+            )
+        }
+        Log.d(TAG, "🌾 Found ${crops.size} ready crops for farmer $farmerId (harvestStageId=$harvestStageId)")
         update { it.copy(readyCrops = crops) }
     }
 

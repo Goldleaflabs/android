@@ -2,6 +2,8 @@ package com.goldleaf.feature.cropmanagement.ui.details
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.goldleaf.core.data.pipeline.PipelineRepository
+import com.goldleaf.core.data.dto.PipelineStageDto
 import com.goldleaf.feature.cropmanagement.domain.usecase.*
 import com.goldleaf.feature.cropmanagement.domain.repository.CropRepository
 import com.goldleaf.feature.cropmanagement.domain.repository.TaskRepository
@@ -29,7 +31,8 @@ class CropDetailsViewModel @Inject constructor(
     private val cropRepository: CropRepository,
     private val taskRepository: TaskRepository,
     private val monitoringRepository: MonitoringRepository,
-    private val growthStageRepository: GrowthStageRepository
+    private val growthStageRepository: GrowthStageRepository,
+    private val pipelineRepository: PipelineRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CropDetailsUiState())
@@ -43,10 +46,12 @@ class CropDetailsViewModel @Inject constructor(
     fun loadCropDetails(cropId: String) {
         currentCropId = cropId
         viewModelScope.launch {
-            // Only show loading if we don't already have the crop
             if (_uiState.value.crop?.id != cropId) {
                 _uiState.value = _uiState.value.copy(isLoading = true)
             }
+
+            // Refresh pipeline stages from server
+            pipelineRepository.refresh()
 
             try {
                 getCropsUseCase().collect { crops ->
@@ -57,7 +62,6 @@ class CropDetailsViewModel @Inject constructor(
                             isLoading = false,
                             error = null
                         )
-                        // Load related data in background (non-blocking)
                         viewModelScope.launch {
                             loadRelatedData(cropId)
                         }
@@ -79,8 +83,12 @@ class CropDetailsViewModel @Inject constructor(
 
     private suspend fun loadRelatedData(cropId: String) {
         try {
+            // Load pipeline stages from cached repository
+            _uiState.value = _uiState.value.copy(
+                pipelineStages = pipelineRepository.stages.value
+            )
+
             // Subscribe to reactive streams for tasks and monitoring
-            // This ensures UI updates when tasks/monitoring records are added
             viewModelScope.launch {
                 taskRepository.getTasksFlow(cropId).collect { tasks ->
                     updateTasksInState(tasks)
@@ -557,13 +565,14 @@ class CropDetailsViewModel @Inject constructor(
 
 data class CropDetailsUiState(
     val crop: CropEntity? = null,
-    val cropDetails: CropDetails? = null, // ADD THIS
+    val cropDetails: CropDetails? = null,
     val tasks: List<TaskEntity> = emptyList(),
     val monitoringRecords: List<CropMonitoringRecord> = emptyList(),
     val growthStages: List<CropGrowthStage> = emptyList(),
     val analytics: CropAnalytics? = null,
-    val upcomingTasks: List<UpcomingTask> = emptyList(), // ADD THIS
-    val recentActivities: List<RecentActivity> = emptyList(), // ADD THIS
+    val upcomingTasks: List<UpcomingTask> = emptyList(),
+    val recentActivities: List<RecentActivity> = emptyList(),
+    val pipelineStages: List<PipelineStageDto> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val message: String? = null

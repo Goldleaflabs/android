@@ -82,7 +82,8 @@ fun CropDetailsScreen(
             onStatusUpdated = { newStatus ->
                 viewModel.updateCropStatus(newStatus)
             },
-            onDismiss = { showStatusSheet = false }
+            onDismiss = { showStatusSheet = false },
+            pipelineStages = uiState.pipelineStages
         )
     }
 

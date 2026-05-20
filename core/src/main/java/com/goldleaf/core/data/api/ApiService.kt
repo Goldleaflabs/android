@@ -1,6 +1,7 @@
 package com.goldleaf.core.data.api
 
 import com.goldleaf.core.data.dto.FarmerUpdateDto
+import com.goldleaf.core.data.dto.PipelineResponse
 import retrofit2.Response
 import retrofit2.http.*
 import com.goldleaf.core.data.dto.crop.*
@@ -498,6 +499,9 @@ interface ApiService {
     @GET("api/officers")
     suspend fun getOfficerByCounty(@Query("county") county: String ): Response<List<Officer>>
 
+    // ==================== PIPELINE ====================
+    @GET("pipeline")
+    suspend fun getPipeline(): Response<PipelineResponse>
 }
 
 

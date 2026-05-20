@@ -52,6 +52,9 @@ data class CropEntity(
     val spacingBetweenPlants: Double? = null,
     val spacingBetweenRows: Double? = null,
 
+    // Pipeline integration
+    val pipelineStageId: Int? = null,
+
     // Additional information
     val notes: String? = null,
     val imageUrl: String? = null,

@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.goldleaf.core.data.dto.PipelineStageDto
 import com.goldleaf.core.data.local.CropStatus
 import com.goldleaf.core.data.local.CropEntity
 
@@ -285,7 +286,8 @@ fun CropStatusProgressSlider(
 fun ManageCropStatusSheet(
     crop: CropEntity,
     onStatusUpdated: (CropStatus) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    pipelineStages: List<PipelineStageDto> = emptyList()
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -346,15 +348,24 @@ fun ManageCropStatusSheet(
                 }
             }
 
-            // Progress Slider
-            crop.status?.let {
-                CropStatusProgressSlider(
-                    currentStatus = it,
-                    onStatusSelected = { newStatus ->
-                        onStatusUpdated(newStatus)
-                        onDismiss()
-                    }
+            // Progress Slider - visual only when using pipeline stages
+            if (pipelineStages.isNotEmpty() && crop.pipelineStageId != null) {
+                PipelineProgressSlider(
+                    pipelineStages = pipelineStages,
+                    currentStageId = crop.pipelineStageId,
+                    onStageSelected = {},
+                    enabled = false
                 )
+            } else {
+                crop.status?.let {
+                    CropStatusProgressSlider(
+                        currentStatus = it,
+                        onStatusSelected = { newStatus ->
+                            onStatusUpdated(newStatus)
+                            onDismiss()
+                        }
+                    )
+                }
             }
         }
     }

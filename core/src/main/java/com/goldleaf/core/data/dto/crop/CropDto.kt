@@ -78,6 +78,9 @@ data class CropDto(
     @SerializedName("yield_unit")
     val yieldUnit: String? = null,
 
+    @SerializedName("pipeline_stage_id")
+    val pipelineStageId: Int? = null,
+
     @SerializedName("is_active")
     val isActive: Boolean = true,
 
