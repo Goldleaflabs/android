@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +39,6 @@ fun CertificationDashboardScreen(
 ) {
     val context = LocalContext.current
     val ui by viewModel.ui.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showLocationErrorDialog by remember { mutableStateOf(false) }
