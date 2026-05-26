@@ -30,7 +30,7 @@ class BatchRepositoryImpl @Inject constructor(
         harvestDate: String,
         farmerId: String,
         farmerName: String,
-        cropId: String = ""
+         cropId: String
     ): Result<ProductBatchEntity> {
         return try {
 
