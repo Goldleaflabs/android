@@ -36,7 +36,8 @@ object BatchProcessor {
             "kg",
             harvestDateIso,
             farmerId,
-            farmerName
+            farmerName,
+            crop.id
         )
 
         var cropUpdateResult: Result<com.goldleaf.core.data.local.CropEntity>? = null

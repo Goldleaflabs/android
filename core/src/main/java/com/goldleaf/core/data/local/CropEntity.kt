@@ -3,6 +3,7 @@ package com.goldleaf.core.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Index
+import com.google.gson.annotations.SerializedName
 import com.goldleaf.core.data.dto.farm.SoilType
 import com.goldleaf.core.data.dto.farm.WaterRequirement
 import java.text.SimpleDateFormat
@@ -21,6 +22,7 @@ data class CropEntity(
     val farmId: String,
     val name: String,
     val farmerId: String,  // ✅ THIS MUST EXIST
+    val cropId: String = "", // master catalog crop ID
     // General crop information (from Crop)
     val scientificName: String? = null,
     val category: String? = null,
@@ -53,6 +55,7 @@ data class CropEntity(
     val spacingBetweenRows: Double? = null,
 
     // Pipeline integration
+    @SerializedName("pipeline_stage_id")
     val pipelineStageId: Int? = null,
 
     // Additional information

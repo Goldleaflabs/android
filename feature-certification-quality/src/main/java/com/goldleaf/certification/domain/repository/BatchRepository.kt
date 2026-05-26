@@ -15,7 +15,8 @@ interface BatchRepository {
         unit: String,
         harvestDate: String,
         farmerId: String,
-        farmerName: String
+        farmerName: String,
+        cropId: String = ""
     ): Result<ProductBatchEntity>
 
     // Get batches

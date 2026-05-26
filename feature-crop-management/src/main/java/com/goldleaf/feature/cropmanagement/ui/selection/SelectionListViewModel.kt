@@ -46,13 +46,21 @@ class SelectionListViewModel @Inject constructor(
             cropRepository.getAllCrops().collect { catalogEntities ->
                 // Get the farm's current crops (exclude these from the list)
                 val farmCrops = cropRepository.getCropsByFarmId(farmId)
-                val farmCropNames = farmCrops
+                // Only active (non-terminal) crops block re-selection across seasons
+                val activeStatuses = listOf(CropStatus.PLANNED, CropStatus.PLANTED, CropStatus.GROWING)
+                val activeFarmCrops = farmCrops.filter { it.status in activeStatuses }
+                val farmCropIds = activeFarmCrops
+                    .map { it.cropId }
+                    .filter { it.isNotEmpty() }
+                    .toSet()
+                val farmCropNames = activeFarmCrops
                     .map { it.name.trim().lowercase() }
                     .toSet()
 
-                // Filter catalog to show only crops NOT already on the farm.
-                // CropEntity.id is an instance id, so matching by id does not work here.
+                // Filter catalog to show only crops NOT already actively growing on the farm.
+                // Uses master cropId when available; falls back to name for legacy crops.
                 val availableCrops = catalogEntities.filter { catalogCrop ->
+                    catalogCrop.cropId !in farmCropIds &&
                     catalogCrop.cropName.trim().lowercase() !in farmCropNames
                 }
 
@@ -121,7 +129,8 @@ class SelectionListViewModel @Inject constructor(
                     name = selectedCrop.name,
                     variety = selectedCrop.variety,
                     createdAt = now,
-                    updatedAt = now
+                    updatedAt = now,
+                    cropId = selectedCrop.id
                 )
             )
             Log.d("SelectionViewModel", "📥 Result received: ${result.isSuccess}")

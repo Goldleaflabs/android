@@ -29,7 +29,8 @@ class BatchRepositoryImpl @Inject constructor(
         unit: String,
         harvestDate: String,
         farmerId: String,
-        farmerName: String
+        farmerName: String,
+        cropId: String = ""
     ): Result<ProductBatchEntity> {
         return try {
 
@@ -48,7 +49,8 @@ class BatchRepositoryImpl @Inject constructor(
                 unit = unit,
                 harvestDate = harvestDateLong,
                 farmerId = farmerId,
-                farmerName = farmerName
+                farmerName = farmerName,
+                cropId = cropId
             )
 
             // Save locally

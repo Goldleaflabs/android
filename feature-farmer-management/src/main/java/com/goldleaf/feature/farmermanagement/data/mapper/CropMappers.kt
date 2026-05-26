@@ -43,7 +43,8 @@ fun CropDto.toDomainModel(): CropEntity {
         status = CropStatus.valueOf(status ?: "ACTIVE"),
         updatedAt = System.currentTimeMillis().toString(),
         variety = variety ?: "N/A",
-        location = ""
+        location = "",
+        pipelineStageId = pipelineStageId
 
 
     )

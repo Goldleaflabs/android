@@ -201,19 +201,31 @@ class BatchViewModel @Inject constructor(
     private suspend fun loadReadyCropsForFarmer(farmerId: String) {
         Log.d(TAG, "🌱 Loading crops for farmer: $farmerId")
         val harvestStageId = pipelineRepository.getHarvestStageId()
-        val crops = if (harvestStageId != null) {
-            val allCrops = cropRepository.getCropsByStatusAndFarmer(
+        val allCrops = if (harvestStageId != null) {
+            cropRepository.getCropsByStatusAndFarmer(
                 listOf(CropStatus.GROWING, CropStatus.PLANNED, CropStatus.HARVESTED),
                 farmerId
             )
-            allCrops.filter { it.pipelineStageId == harvestStageId }
         } else {
             cropRepository.getCropsByStatusAndFarmer(
                 listOf(CropStatus.HARVESTED),
                 farmerId
             )
         }
-        Log.d(TAG, "🌾 Found ${crops.size} ready crops for farmer $farmerId (harvestStageId=$harvestStageId)")
+
+        // Exclude crops that already have a batch
+        val batchedCropIds = _ui.value.batches.map { it.cropId }.filter { it.isNotEmpty() }.toSet()
+        val pipelineFiltered = if (harvestStageId != null) {
+            allCrops.filter {
+                it.pipelineStageId == harvestStageId ||
+                (it.pipelineStageId == null && it.status == CropStatus.HARVESTED)
+            }
+        } else {
+            allCrops
+        }
+        val crops = pipelineFiltered.filter { it.id !in batchedCropIds }
+
+        Log.d(TAG, "🌾 Found ${crops.size} ready crops for farmer $farmerId (harvestStageId=$harvestStageId, ${batchedCropIds.size} already batched)")
         update { it.copy(readyCrops = crops) }
     }
 
@@ -258,6 +270,7 @@ class BatchViewModel @Inject constructor(
             }
 
             loadBatchesForFarmer(id)
+            loadReadyCropsForFarmer(id)
             onSuccess()
         }
     }
