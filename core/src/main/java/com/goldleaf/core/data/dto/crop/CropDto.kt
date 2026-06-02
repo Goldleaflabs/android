@@ -125,5 +125,7 @@ data class CropMasterDto(
     val typicalGrowingPeriod: Int?,
     val waterRequirement: String?,
     val baseImageUrl: String?,
-    val isActive: Boolean
+    val isActive: Boolean,
+    @SerializedName("rotation_group")
+    val rotationGroup: String? = null
 )

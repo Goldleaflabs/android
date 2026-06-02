@@ -21,6 +21,10 @@ import com.goldleaf.core.data.dto.farm.FarmerUpdateRequest
 import com.goldleaf.core.data.dto.farm.GeoPoint
 import com.goldleaf.core.data.local.GrowthStageEntity
 import com.goldleaf.core.data.local.Officer
+import com.goldleaf.core.data.local.ComplianceChecklistEntity
+import com.goldleaf.core.data.local.SeasonalPlanEntity
+import com.goldleaf.core.data.local.SoilTestEntity
+import com.goldleaf.core.data.local.PlotEntity
 import com.google.gson.annotations.SerializedName
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -464,6 +468,27 @@ interface ApiService {
     @GET("sync/download")
     suspend fun syncDownload( @Query("userId") userId: String, @Query("lastSync") lastSyncTimestamp: Long ): Response<SyncDataDto>
 
+    // ==================== SEASONAL PLANS ====================
+    @POST("seasonal-plans/sync")
+    suspend fun syncSeasonalPlans(@Body plans: List<SeasonalPlanEntity>): Response<SyncResponseDto>
+
+    @GET("seasonal-plans")
+    suspend fun getSeasonalPlans(@Query("farmId") farmId: String? = null): Response<List<SeasonalPlanEntity>>
+
+    // ==================== COMPLIANCE CHECKLIST ====================
+    @POST("compliance-checklist/sync")
+    suspend fun syncComplianceChecklist(@Body items: List<ComplianceChecklistEntity>): Response<SyncResponseDto>
+
+    @GET("compliance-checklist")
+    suspend fun getComplianceChecklist(@Query("farmId") farmId: String? = null): Response<List<ComplianceChecklistEntity>>
+
+    // ==================== SOIL TESTS ====================
+    @POST("soil-tests/sync")
+    suspend fun syncSoilTests(@Body items: List<SoilTestEntity>): Response<SyncResponseDto>
+
+    // ==================== FARM PLOTS ====================
+    @POST("plots/sync")
+    suspend fun syncPlots(@Body items: List<PlotEntity>): Response<SyncResponseDto>
 
     @GET("api/v1/market/summary")
     suspend fun getMarketSummary( @Query("location") location: String ): Response<MarketSummary>

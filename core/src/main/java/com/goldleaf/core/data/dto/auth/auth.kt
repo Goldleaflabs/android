@@ -27,6 +27,9 @@ import com.goldleaf.core.data.local.Officer
 import com.goldleaf.core.data.local.ProductBatchEntity
 import com.goldleaf.core.data.local.ProductJourneyEntity
 import com.goldleaf.core.data.local.QualityParameterEntity
+import com.goldleaf.core.data.local.ComplianceChecklistEntity
+import com.goldleaf.core.data.local.PlotEntity
+import com.goldleaf.core.data.local.SeasonalPlanEntity
 import com.goldleaf.core.data.local.SoilTestEntity
 import com.goldleaf.core.data.local.TaskEntity
 import com.goldleaf.core.data.local.WeatherEntity
@@ -343,8 +346,9 @@ data class FarmDto(
 data class FarmCreateRequest(
     val name: String,
     val size: Double,
-    val locationName: String? = null, // <-- ADD THIS FIELD
-    val documentReference: String? = null, // <-- ADD THIS FIELD
+    val locationName: String? = null,
+    val region: String? = null,
+    val documentReference: String? = null,
     val location: LocationDto,
     val boundaries: List<LocationDto>
 )
@@ -681,6 +685,12 @@ data class SyncDataDto(
     val officers: List<Officer>? = null,
     val harvestRecords: List<HarvestRecordEntity>? = null,
     val cropMaster: List<CropMasterEntity>? = null,
+    @SerializedName("seasonal_plans")
+    val seasonalPlans: List<SeasonalPlanEntity>? = null,
+    @SerializedName("compliance_checklist")
+    val complianceChecklist: List<ComplianceChecklistEntity>? = null,
+    @SerializedName("plots")
+    val plots: List<PlotEntity>? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
 

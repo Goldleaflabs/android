@@ -57,6 +57,7 @@ data class CropEntity(
     // Pipeline integration
     @SerializedName("pipeline_stage_id")
     val pipelineStageId: Int? = null,
+    val plotId: String? = null,
 
     // Additional information
     val notes: String? = null,

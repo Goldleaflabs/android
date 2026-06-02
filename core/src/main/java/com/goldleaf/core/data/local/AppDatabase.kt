@@ -15,6 +15,9 @@ import com.goldleaf.core.data.local.dao.CropTaskDao
 import com.goldleaf.core.data.local.dao.CropVarietyDao
 import com.goldleaf.core.data.local.dao.FarmDao
 import com.goldleaf.core.data.local.dao.FarmerDao
+import com.goldleaf.core.data.local.dao.InputDao
+import com.goldleaf.core.data.local.dao.ComplianceChecklistDao
+import com.goldleaf.core.data.local.dao.SeasonalPlanDao
 import com.goldleaf.core.data.local.dao.GrowthStageDao
 import com.goldleaf.core.data.local.dao.HarvestDao
 import com.goldleaf.core.data.local.dao.JourneyEventDao
@@ -28,6 +31,7 @@ import com.goldleaf.core.data.local.dao.QualityParameterDao
 import com.goldleaf.core.data.local.dao.SoilDao
 import com.goldleaf.core.data.local.dao.TaskDao
 import com.goldleaf.core.data.local.dao.WeatherDao
+import com.goldleaf.core.data.local.dao.PlotDao
 
 @Database(
     entities = [
@@ -56,9 +60,13 @@ import com.goldleaf.core.data.local.dao.WeatherDao
         CropMonitoringRecordEntity::class,
         CropActivity::class,
         Officer::class,
-        CropMasterEntity::class
+        CropMasterEntity::class,
+        InputEntity::class,
+        SeasonalPlanEntity::class,
+        ComplianceChecklistEntity::class,
+        PlotEntity::class
     ],
-    version = 12,
+    version = 16,
     exportSchema = false
 )
 
@@ -100,6 +108,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cropTaskDao(): CropTaskDao
     abstract fun cropMonitoringDao(): CropMonitoringDao
     abstract fun harvestDao(): HarvestDao
+    abstract fun inputDao(): InputDao
+    abstract fun seasonalPlanDao(): SeasonalPlanDao
+    abstract fun complianceChecklistDao(): ComplianceChecklistDao
+    abstract fun plotDao(): PlotDao
 }
 
 // DATABASE BUILDER

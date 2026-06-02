@@ -304,6 +304,7 @@ class FarmSetupViewModel @Inject constructor(
                         name = name,
                         size = size,
                         locationName = currentState.locationName,
+                        region = currentState.region.takeIf { it.isNotBlank() },
                         documentReference = referenceNumber.takeIf { it.isNotBlank() },
                         location = LocationDto(center.latitude, center.longitude),
                         boundaries = boundary.map { LocationDto(it.latitude, it.longitude) }

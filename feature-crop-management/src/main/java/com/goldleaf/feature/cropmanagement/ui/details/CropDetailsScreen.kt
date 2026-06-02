@@ -35,6 +35,7 @@ fun CropDetailsScreen(
     cropId: String,
     onNavigateBack: () -> Unit,
     onNavigateToAddTask: (String) -> Unit,
+    onNavigateToInputTracking: (cropId: String, farmId: String, farmerId: String) -> Unit,
     viewModel: CropDetailsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,6 +46,7 @@ fun CropDetailsScreen(
     var showMigrationSheet by remember { mutableStateOf(false) }
     var showMonitoringSheet by remember { mutableStateOf(false) }
     var showStatusSheet by remember { mutableStateOf(false) }
+    var showCreateTaskDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(cropId) {
         viewModel.loadCropDetails(cropId)
@@ -84,6 +86,40 @@ fun CropDetailsScreen(
             },
             onDismiss = { showStatusSheet = false },
             pipelineStages = uiState.pipelineStages
+        )
+    }
+
+    // --- CREATE TASK DIALOG ---
+    if (showCreateTaskDialog && uiState.crop != null) {
+        CreateTaskDialog(
+            onDismiss = { showCreateTaskDialog = false },
+            onConfirm = { title, description, dueDate, priority ->
+                val crop = uiState.crop!!
+                val task = TaskEntity(
+                    id = UUID.randomUUID().toString(),
+                    cropId = cropId,
+                    farmId = crop.farmId,
+                    title = title,
+                    taskName = title,
+                    taskType = priority.name,
+                    status = "PENDING",
+                    dueDate = dueDate,
+                    description = description,
+                    priority = priority,
+                    isCompleted = false,
+                    completedDate = null,
+                    assignedTo = null,
+                    estimatedDuration = null,
+                    actualDuration = null,
+                    notes = null,
+                    category = TaskCategory.OTHER,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis(),
+                    farmerId = crop.farmerId
+                )
+                viewModel.addTask(task)
+                showCreateTaskDialog = false
+            }
         )
     }
 
@@ -136,7 +172,16 @@ fun CropDetailsScreen(
                         }
                         DetailTab.TASKS -> {
                             BottomActionButton(
-                                label = "New Task",
+                                label = "Create Task",
+                                icon = Icons.Default.AddTask,
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary,
+                                modifier = Modifier.weight(1f),
+                                onClick = { showCreateTaskDialog = true }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            BottomActionButton(
+                                label = "Log Activity",
                                 icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
                                 containerColor = colorScheme.secondaryContainer,
                                 contentColor = colorScheme.onSecondaryContainer,
@@ -146,12 +191,26 @@ fun CropDetailsScreen(
                         }
                         else -> {
                             BottomActionButton(
-                                label = "New Task",
-                                icon = Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                                label = "Log Activity",
+                                icon = Icons.Default.Spa,
                                 containerColor = colorScheme.secondaryContainer,
                                 contentColor = colorScheme.onSecondaryContainer,
                                 modifier = Modifier.weight(1f),
                                 onClick = { onNavigateToAddTask(cropId) }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            BottomActionButton(
+                                label = "Track Input",
+                                icon = Icons.Default.Inventory2,
+                                containerColor = colorScheme.tertiaryContainer,
+                                contentColor = colorScheme.onTertiaryContainer,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    val c = uiState.crop
+                                    if (c != null) {
+                                        onNavigateToInputTracking(cropId, c.farmId, c.farmerId)
+                                    }
+                                }
                             )
                         }
                     }
@@ -772,6 +831,75 @@ private fun InfoRow(  icon: ImageVector, label: String,  value: String) {
             )
         }
     }
+}
+
+@Composable
+private fun CreateTaskDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (title: String, description: String, dueDate: String, priority: TaskPriority) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var dueDate by remember { mutableStateOf("") }
+    var selectedPriority by remember { mutableStateOf(TaskPriority.MEDIUM) }
+    var expanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Create Task") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Task title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = dueDate,
+                    onValueChange = { dueDate = it },
+                    label = { Text("Due date (yyyy-MM-dd)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text("Priority: ${selectedPriority.name}", style = MaterialTheme.typography.labelMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TaskPriority.entries.forEach { priority ->
+                        FilterChip(
+                            selected = selectedPriority == priority,
+                            onClick = { selectedPriority = priority },
+                            label = { Text(priority.name, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (title.isNotBlank() && dueDate.isNotBlank()) {
+                        onConfirm(title, description, dueDate, selectedPriority)
+                    }
+                },
+                enabled = title.isNotBlank() && dueDate.isNotBlank()
+            ) {
+                Text("Create")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 // Data classes

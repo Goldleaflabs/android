@@ -34,6 +34,10 @@ import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Grid3x3
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -478,12 +482,48 @@ private fun QuickActionsSection(
 
         Spacer(Modifier.height(12.dp))
 
-        // Row 5: Training
+        // Row 5: Training & Seasonal Plan
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
                 icon = Icons.Default.School,
                 title = "Training",
                 onClick = { navController.navigate("training_catalog") },
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionCard(
+                icon = Icons.Default.CalendarMonth,
+                title = "Seasonal Plan",
+                onClick = { navController.navigate("seasonal_planning/$farmId") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // Row 6: Compliance & Soil Profile
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QuickActionCard(
+                icon = Icons.Default.Checklist,
+                title = "Compliance",
+                onClick = { navController.navigate("compliance_tracking/$farmId") },
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionCard(
+                icon = Icons.Default.Science,
+                title = "Soil Profile",
+                onClick = { navController.navigate("soil_profile/$farmId") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // Row 7: Farm Plots
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QuickActionCard(
+                icon = Icons.Default.Grid3x3,
+                title = "Farm Plots",
+                onClick = { navController.navigate("farm_plots/$farmId") },
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.weight(1f))

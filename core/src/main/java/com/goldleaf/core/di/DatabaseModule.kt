@@ -93,6 +93,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun providePlotDao(database: AppDatabase): PlotDao {
+        return database.plotDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideCertificationDao(database: AppDatabase): CertificationDao {
         return database.certificationDao()
     }
@@ -164,4 +170,21 @@ object DatabaseModule {
         return database.harvestDao()
     }
 
+    @Provides
+    @Singleton
+    fun provideInputDao(database: AppDatabase): InputDao {
+        return database.inputDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSeasonalPlanDao(database: AppDatabase): SeasonalPlanDao {
+        return database.seasonalPlanDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideComplianceChecklistDao(database: AppDatabase): ComplianceChecklistDao {
+        return database.complianceChecklistDao()
+    }
 }

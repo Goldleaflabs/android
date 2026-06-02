@@ -9,12 +9,12 @@ import com.goldleaf.core.data.local.CropEntity
 import com.goldleaf.core.data.local.FarmEntity
 import com.goldleaf.core.data.local.TaskEntity
 import com.goldleaf.core.data.local.dao.CropDao
-import com.goldleaf.core.util.onSuccess
 import com.goldleaf.feature.cropmanagement.domain.repository.TaskRepository
 import com.goldleaf.feature.farmermanagement.domain.repository.FarmerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,7 +32,6 @@ class DashboardViewModel @Inject constructor(
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
     private val _selectedFarmName = MutableStateFlow<String?>(null)
 
-    // --- REACTIVE FARMER PROFILE ---
     @kotlinx.coroutines.ExperimentalCoroutinesApi
     val currentFarmer: StateFlow<DashboardFarmer?> = combine(
         userSession.currentFarmer,
@@ -53,8 +52,6 @@ class DashboardViewModel @Inject constructor(
         initialValue = null
     )
 
-
-    // ✅ UPDATED: Now accepts farmerId as parameter
     fun loadAllFarms(farmerId: String) {
         viewModelScope.launch {
             try {
@@ -69,122 +66,100 @@ class DashboardViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(
-                        error = e.message
-                    )
+                    it.copy(error = e.message)
                 }
             }
         }
     }
 
-
-    private var dataCollectionJob: Job? = null
+    private var dashboardJob: Job? = null
 
     fun loadDashboardData(farmerId: String, selectedFarmId: String) {
-        // Cancel previous collection if any
-        dataCollectionJob?.cancel()
+        dashboardJob?.cancel()
 
-        dataCollectionJob = viewModelScope.launch {
-            // Collect farms Flow - updates automatically when data changes
+        dashboardJob = viewModelScope.launch {
             farmerRepository.getFarmerFarms(farmerId)
                 .collectLatest { allFarms ->
-
                     if (allFarms.isEmpty()) {
                         _uiState.update { it.copy(totalFarms = 0) }
                         return@collectLatest
                     }
 
-                    // Set farm name
                     _selectedFarmName.value = if (selectedFarmId == "all" || selectedFarmId.isEmpty()) {
                         "All Farms"
                     } else {
                         allFarms.find { it.id == selectedFarmId }?.name
                     }
 
-                    // Process and update dashboard reactively
-                    processAndUpdateDashboard(allFarms)
+                    observeFarmData(allFarms)
                 }
         }
     }
 
-    private suspend fun processAndUpdateDashboard(allFarms: List<Farm>) {
-        // Create flows for each farm's data
-        val farmDataFlows = allFarms.map { farm ->
-            combine(
-                // Get crops as Flow - convert Result to Flow
-                flow {
-                    farmerRepository.getFarmCrops(farm.id).onSuccess { crops ->
-                        emit(crops)
+    private fun observeFarmData(allFarms: List<Farm>) {
+        viewModelScope.launch {
+            val farmDataFlows = allFarms.map { farm ->
+                combine(
+                    farmerRepository.getFarmCropsFlow(farm.id),
+                    tasksRepository.getTasksByFarmIdFlow(farm.id)
+                ) { crops, tasks ->
+                    val activities = crops.flatMap { crop ->
+                        cropDao.getActivitiesByCropId(crop.id).firstOrNull() ?: emptyList()
                     }
-                }.catch { emit(emptyList()) },
-                // Get tasks as Flow - convert Result to Flow
-                flow {
-                    tasksRepository.getTasksByFarmId(farm.id).onSuccess { tasks ->
-                        emit(tasks)
-                    }
-                }.catch { emit(emptyList()) }
-            ) { crops, tasks ->
-                // For each crop, get its activities from the DAO (which returns Flow)
-                val activities = crops.flatMap { crop ->
-                    cropDao.getActivitiesByCropId(crop.id).firstOrNull() ?: emptyList()
+                    FarmData(crops, tasks, activities)
                 }
-                Triple(crops, tasks, activities)
-            }
-        }
-
-        // Combine all farm data into a single flow
-        combine(farmDataFlows) { farmDataArray ->
-            val allCrops = mutableListOf<CropEntity>()
-            val allTasks = mutableListOf<TaskEntity>()
-            val allActivities = mutableListOf<CropActivity>()
-
-            farmDataArray.forEach { (crops, tasks, activities) ->
-                allCrops.addAll(crops)
-                allTasks.addAll(tasks)
-                allActivities.addAll(activities)
             }
 
-            Triple(allCrops, allTasks, allActivities)
-        }.collect { (crops, tasks, activities) ->
-            // Silently update UI whenever any data changes
-            _uiState.update { currentState ->
-                currentState.copy(
-                    farms = allFarms,
-                    totalFarms = allFarms.size,
-                    activeCrops = crops.size,
-                    pendingTasks = tasks.size,
-                    recentActivities = activities
-                        .sortedByDescending { it.createdAt }
-                        .take(10)
-                        .map { it.description }
-                )
+            combine(farmDataFlows) { dataArray ->
+                val allCrops = mutableListOf<CropEntity>()
+                val allTasks = mutableListOf<TaskEntity>()
+                val allActivities = mutableListOf<CropActivity>()
+
+                dataArray.forEach { data ->
+                    allCrops.addAll(data.crops)
+                    allTasks.addAll(data.tasks)
+                    allActivities.addAll(data.activities)
+                }
+
+                AggregatedData(allCrops, allTasks, allActivities)
+            }.collect { (crops, tasks, activities) ->
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        farms = allFarms,
+                        totalFarms = allFarms.size,
+                        activeCrops = crops.size,
+                        pendingTasks = tasks.size,
+                        recentActivities = activities
+                            .sortedByDescending { it.createdAt }
+                            .take(10)
+                            .map { it.description }
+                    )
+                }
             }
         }
     }
-
 
     override fun onCleared() {
         super.onCleared()
-        dataCollectionJob?.cancel()
+        dashboardJob?.cancel()
     }
 
-
-    // ✅ UPDATED: Now accepts farmerId as parameter
     fun refreshDashboard(farmerId: String, selectedFarmId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
 
-            if (selectedFarmId.isNotEmpty()) {
-                loadDashboardData(farmerId, selectedFarmId)
-            } else {
-                loadAllFarms(farmerId)
+            withContext(Dispatchers.IO) {
+                try { farmerRepository.syncFarmerData() } catch (_: Exception) { }
+                try { farmerRepository.getFarmCrops(selectedFarmId) } catch (_: Exception) { }
+                try { tasksRepository.getTasksByFarmId(selectedFarmId) } catch (_: Exception) { }
             }
+
+            delay(500)
 
             _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 
-    // ✅ UPDATED: Now accepts both parameters
     fun onScreenLoaded(farmerId: String, selectedFarmId: String) {
         if (selectedFarmId.isNotEmpty()) {
             loadDashboardData(farmerId, selectedFarmId)
@@ -193,12 +168,10 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    // Load farmer profile info from session
     fun loadFarmerProfile() {
         viewModelScope.launch {
             try {
                 userSession.getCurrentUserId()
-                // Profile data flows through currentFarmer state
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "Failed to load profile"
@@ -206,9 +179,19 @@ class DashboardViewModel @Inject constructor(
             }
         }
     }
+}
 
-    }
+private data class FarmData(
+    val crops: List<CropEntity>,
+    val tasks: List<TaskEntity>,
+    val activities: List<CropActivity>
+)
 
+private data class AggregatedData(
+    val crops: List<CropEntity>,
+    val tasks: List<TaskEntity>,
+    val activities: List<CropActivity>
+)
 
 data class DashboardUiState(
     val farms: List<Farm> = emptyList(),

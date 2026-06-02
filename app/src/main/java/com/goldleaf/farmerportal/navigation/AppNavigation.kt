@@ -35,6 +35,11 @@ import com.goldleaf.feature.advisoryservices.ui.DiseaseDetectionScreen
 import com.goldleaf.feature.advisoryservices.ui.PestDetectionScreen
 import com.goldleaf.feature.advisoryservices.ui.SoilAnalysisScreen
 import com.goldleaf.feature.cropmanagement.ui.activity.AddCropTasksScreen
+import com.goldleaf.feature.cropmanagement.ui.input.InputTrackingScreen
+import com.goldleaf.feature.cropmanagement.ui.seasonal.SeasonalPlanningScreen
+import com.goldleaf.feature.cropmanagement.ui.compliance.ComplianceTrackingScreen
+import com.goldleaf.feature.cropmanagement.ui.soil.SoilProfileScreen
+import com.goldleaf.feature.cropmanagement.ui.plots.PlotManagementScreen
 import com.goldleaf.feature.farmermanagement.ui.ChangePasswordScreen
 import com.goldleaf.feature.trainingextension.ui.TrainingDetailsScreen
 import com.goldleaf.feature.trainingextension.ui.VideoPlayerScreen
@@ -71,6 +76,11 @@ object Routes {
     const val TRAINING_CATALOG = "training_catalog"
     const val TRAINING_DETAILS = "training_details/{trainingId}"
     const val VIDEO_PLAYER = "video_player/{videoUrl}"
+    const val INPUT_TRACKING = "input_tracking/{cropId}/{farmId}/{farmerId}"
+    const val SEASONAL_PLANNING = "seasonal_planning/{farmId}"
+    const val COMPLIANCE_TRACKING = "compliance_tracking/{farmId}"
+    const val SOIL_PROFILE = "soil_profile/{farmId}"
+    const val PLOT_MANAGEMENT = "farm_plots/{farmId}"
 
 
    // Helper functions
@@ -90,6 +100,11 @@ object Routes {
     fun farmerManagement(farmerId: String) = "farmer_management/$farmerId"
     fun addCropTasks(cropId: String) = "add_crop_tasks/$cropId"
     fun myCrops(farmId: String) = "my_crops/$farmId"
+    fun inputTracking(cropId: String, farmId: String, farmerId: String) = "input_tracking/$cropId/$farmId/$farmerId"
+    fun seasonalPlanning(farmId: String) = "seasonal_planning/$farmId"
+    fun complianceTracking(farmId: String) = "compliance_tracking/$farmId"
+    fun soilProfile(farmId: String) = "soil_profile/$farmId"
+    fun plotManagement(farmId: String) = "farm_plots/$farmId"
 
 }
 
@@ -275,6 +290,9 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToAddTask = {
                     navController.navigate(Routes.addCropTasks(cropId))
+                },
+                onNavigateToInputTracking = { cropId, farmId, farmerId ->
+                    navController.navigate(Routes.inputTracking(cropId, farmId, farmerId))
                 }
             )
         }
@@ -294,11 +312,69 @@ fun AppNavigation(
             )
         }
 
+        composable(
+            route = Routes.INPUT_TRACKING,
+            arguments = listOf(
+                navArgument("cropId") { type = NavType.StringType },
+                navArgument("farmId") { type = NavType.StringType },
+                navArgument("farmerId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val cropId = backStackEntry.arguments?.getString("cropId") ?: return@composable
+            val farmId = backStackEntry.arguments?.getString("farmId") ?: return@composable
+            val farmerId = backStackEntry.arguments?.getString("farmerId") ?: return@composable
+            InputTrackingScreen(
+                cropId = cropId,
+                farmId = farmId,
+                farmerId = farmerId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
 
+        composable(
+            route = Routes.SEASONAL_PLANNING,
+            arguments = listOf(navArgument("farmId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val farmId = backStackEntry.arguments?.getString("farmId") ?: return@composable
+            SeasonalPlanningScreen(
+                farmId = farmId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
 
+        composable(
+            route = Routes.COMPLIANCE_TRACKING,
+            arguments = listOf(navArgument("farmId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val farmId = backStackEntry.arguments?.getString("farmId") ?: return@composable
+            ComplianceTrackingScreen(
+                farmId = farmId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
 
+        composable(
+            route = Routes.SOIL_PROFILE,
+            arguments = listOf(navArgument("farmId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val farmId = backStackEntry.arguments?.getString("farmId") ?: return@composable
+            SoilProfileScreen(
+                farmId = farmId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
 
-
+        composable(
+            route = Routes.PLOT_MANAGEMENT,
+            arguments = listOf(navArgument("farmId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val farmId = backStackEntry.arguments?.getString("farmId") ?: return@composable
+            PlotManagementScreen(
+                farmId = farmId,
+                onNavigateBack = { navController.popBackStack() },
+                onPlotClick = { /* future: plot detail with rotation */ }
+            )
+        }
 
         // Advisory Services
         composable(Routes.ADVISORY_DASHBOARD) {

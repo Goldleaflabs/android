@@ -11,6 +11,7 @@ data class CropMasterEntity(
     val cropId: String,
     val cropName: String,
     val category: String,
+    val rotationGroup: String? = null,
     val isActive: Boolean,
     val farmerId: String? = null,
     val farmId: String? = null
@@ -21,6 +22,7 @@ fun CropMasterDto.toEntity(): CropMasterEntity {
         cropId = this.id,
         cropName = this.name,
         category = this.category?: "UnKnown",
+        rotationGroup = this.rotationGroup,
         isActive = this.isActive
     )
 }

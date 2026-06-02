@@ -8,8 +8,10 @@ import com.goldleaf.core.data.dto.farm.FarmingType
 import com.goldleaf.core.data.dto.farm.LandUnit
 import com.goldleaf.core.data.dto.farm.OwnershipType
 import com.goldleaf.core.data.dto.farm.PersonalInfo
+import com.goldleaf.core.data.dto.farm.GeoPoint
 import com.goldleaf.core.data.local.FarmEntity
 import com.goldleaf.core.data.local.FarmerEntity
+import com.google.gson.Gson
 
 
 // =====================================================
@@ -77,10 +79,13 @@ fun Farm.toEntity(): FarmEntity {
     return FarmEntity(
         id = id,
         name = name,
-        sizeUnit = sizeUnit.name ,
-        location=" ",
-        farmerId=farmerId,
-        size=totalSize
+        sizeUnit = sizeUnit.name,
+        location = Gson().toJson(location),
+        farmerId = farmerId,
+        size = totalSize,
+        latitude = location.centerLatitude,
+        longitude = location.centerLongitude,
+        boundaries = if (boundaries.isNotEmpty()) Gson().toJson(boundaries) else null
     )
 }
 
