@@ -66,18 +66,18 @@ fun ChangePasswordScreen(
                     Icon(
                         Icons.Default.Info,
                         contentDescription = null,
-                        tint = Color(0xFF1976D2)
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Column {
                         Text(
                             "Password Requirements",
                             style = MaterialTheme.typography.titleSmall,
-                            color = Color(0xFF1565C0)
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             "• At least 8 characters\n• Include uppercase & lowercase\n• Include numbers",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF1976D2)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -178,7 +178,7 @@ fun ChangePasswordScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
                     Text("Change Password")
@@ -195,7 +195,7 @@ fun ChangePasswordScreen(
                     Text(
                         text = message,
                         modifier = Modifier.padding(16.dp),
-                        color = Color(0xFF2E7D32)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -209,7 +209,7 @@ fun ChangePasswordScreen(
                     Text(
                         text = error,
                         modifier = Modifier.padding(16.dp),
-                        color = Color(0xFFC62828)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }

@@ -97,6 +97,21 @@ object DatabaseModule {
         return database.plotDao()
     }
 
+    @Provides @Singleton
+    fun providePaymentDao(database: AppDatabase): PaymentDao { return database.paymentDao() }
+
+    @Provides @Singleton
+    fun provideHarvestDeliveryDao(database: AppDatabase): HarvestDeliveryDao { return database.harvestDeliveryDao() }
+
+    @Provides @Singleton
+    fun provideBatchSalesDao(database: AppDatabase): BatchSalesDao { return database.batchSalesDao() }
+
+    @Provides @Singleton
+    fun provideDeductionDao(database: AppDatabase): DeductionDao { return database.deductionDao() }
+
+    @Provides @Singleton
+    fun provideFarmerPayoutInfoDao(database: AppDatabase): FarmerPayoutInfoDao { return database.farmerPayoutInfoDao() }
+
     @Provides
     @Singleton
     fun provideCertificationDao(database: AppDatabase): CertificationDao {

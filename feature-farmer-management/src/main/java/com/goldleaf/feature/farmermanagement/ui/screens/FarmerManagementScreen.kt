@@ -587,7 +587,7 @@ private fun WeatherCard(weather: WeatherSummary) {
                     else -> Icons.Default.WbCloudy
                 },
                 contentDescription = weather.condition,
-                tint = Color(0xFF1976D2),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(48.dp)
             )
 
@@ -598,19 +598,19 @@ private fun WeatherCard(weather: WeatherSummary) {
                     text = "${weather.currentTemp.toInt()}°C",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1976D2)
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Text(
                     text = weather.condition,
                     fontSize = 16.sp,
-                    color = Color(0xFF666666)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
                     text = weather.location,
                     fontSize = 14.sp,
-                    color = Color(0xFF666666)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -619,7 +619,7 @@ private fun WeatherCard(weather: WeatherSummary) {
                     text = "${weather.humidity}%",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF1976D2)
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = "Humidity",

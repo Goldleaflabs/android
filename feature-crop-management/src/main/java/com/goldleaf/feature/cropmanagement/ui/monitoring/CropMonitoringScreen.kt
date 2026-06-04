@@ -243,7 +243,7 @@ private fun GrowthProgressChart(crops: List<CropEntity>) {
             Text("Growth Progress", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(16.dp))
             if (crops.isEmpty()) {
-                Text("No active crops", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                Text("No active crops", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
             } else {
                 crops.take(5).forEach { crop ->
                     CropProgressItem(crop)
@@ -327,16 +327,16 @@ private fun YieldAnalyticsCard(analytics: YieldAnalytics) {
             Text("Yield Analytics", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("Expected Yield", fontSize = 12.sp, color = Color.Gray); Text(String.format("%.1f kg/ha", analytics.averageYieldPerHectare), fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+                Column { Text("Expected Yield", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(String.format("%.1f kg/ha", analytics.averageYieldPerHectare), fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Efficiency", fontSize = 12.sp, color = Color.Gray)
+                    Text("Efficiency", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(String.format("%.1f%%", analytics.yieldEfficiency), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = if (analytics.yieldEfficiency!! >= 80) MaterialTheme.colorScheme.primary else Color(0xFFFF9800))
                 }
             }
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("Total Expected", fontSize = 12.sp, color = Color.Gray); Text(String.format("%.1f kg", analytics.totalExpectedYield), fontSize = 14.sp) }
-                Column(horizontalAlignment = Alignment.End) { Text("Total Actual", fontSize = 12.sp, color = Color.Gray); Text(String.format("%.1f kg", analytics.totalActualYield), fontSize = 14.sp) }
+                Column { Text("Total Expected", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(String.format("%.1f kg", analytics.totalExpectedYield), fontSize = 14.sp) }
+                Column(horizontalAlignment = Alignment.End) { Text("Total Actual", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant); Text(String.format("%.1f kg", analytics.totalActualYield), fontSize = 14.sp) }
             }
         }
     }
@@ -349,7 +349,7 @@ private fun MetricItem(title: String, value: String, icon: ImageVector, color: C
         Icon(icon, null, modifier = Modifier.size(24.dp), tint = color)
         Spacer(Modifier.height(4.dp))
         Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-        Text(title, fontSize = 10.sp, color = Color.Gray)
+        Text(title, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -360,7 +360,7 @@ private fun CropProgressItem(crop: CropEntity) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(crop.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text((crop.status ?: CropStatus.PLANNED).name.replace("_", " "), fontSize = 12.sp, color = Color.Gray)
+            Text((crop.status ?: CropStatus.PLANNED).name.replace("_", " "), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.width(16.dp))
         Column(horizontalAlignment = Alignment.End) {
@@ -378,7 +378,7 @@ private fun HealthMetric(title: String, count: Int, color: Color, percentage: In
         }
         Spacer(Modifier.height(4.dp))
         Text(title, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
-        Text("$percentage%", fontSize = 10.sp, color = Color.Gray)
+        Text("$percentage%", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

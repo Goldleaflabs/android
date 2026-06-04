@@ -46,6 +46,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -133,9 +134,9 @@ fun RegistrationScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF4CAF50),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -224,7 +225,7 @@ private fun PhoneInputStep(
             imageVector = Icons.Default.Phone,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = Color(0xFF4CAF50)
+            tint = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -233,7 +234,7 @@ private fun PhoneInputStep(
             text = "Farmer Registration",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF4CAF50)
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -241,7 +242,7 @@ private fun PhoneInputStep(
         Text(
             text = "Enter your phone number to get started",
             fontSize = 16.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
 
@@ -268,7 +269,7 @@ private fun PhoneInputStep(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = error,
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.error,
                 fontSize = 14.sp
             )
         }
@@ -282,13 +283,13 @@ private fun PhoneInputStep(
                 .height(56.dp),
             enabled = !isLoading && phoneNumber.isNotBlank(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50)
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
                 Text("Send OTP", fontSize = 16.sp)
@@ -320,7 +321,7 @@ private fun OtpVerificationStep(
             imageVector = Icons.Default.VerifiedUser,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = Color(0xFF4CAF50)
+            tint = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -329,7 +330,7 @@ private fun OtpVerificationStep(
             text = "Enter Verification Code",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF4CAF50)
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -337,7 +338,7 @@ private fun OtpVerificationStep(
         Text(
             text = "We sent a code to $phoneNumber",
             fontSize = 14.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
 
@@ -364,7 +365,7 @@ private fun OtpVerificationStep(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = error,
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.error,
                 fontSize = 14.sp
             )
         }
@@ -375,11 +376,11 @@ private fun OtpVerificationStep(
             Text(
                 text = "Resend code in ${timeRemaining}s",
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             TextButton(onClick = onResendOTP) {
-                Text("Resend OTP", color = Color(0xFF4CAF50))
+                Text("Resend OTP", color = MaterialTheme.colorScheme.primary)
             }
         }
 
@@ -392,13 +393,13 @@ private fun OtpVerificationStep(
                 .height(56.dp),
             enabled = !isLoading && otpCode.length == 6,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50)
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
                 Text("Verify", fontSize = 16.sp)
@@ -447,7 +448,7 @@ private fun FarmerDetailsStep(
             modifier = Modifier
                 .size(64.dp)
                 .align(Alignment.CenterHorizontally),
-            tint = Color(0xFF4CAF50)
+            tint = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -456,14 +457,14 @@ private fun FarmerDetailsStep(
             text = "Your Details",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF4CAF50),
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
         Text(
             text = "Complete your registration",
             fontSize = 14.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 24.dp)
@@ -529,7 +530,7 @@ private fun FarmerDetailsStep(
             value = farmName,
             onValueChange = onFarmNameChange,
             label = { Text("Farm Name (e.g. Sunshine Acres)") },
-            leadingIcon = { Icon(Icons.Default.Agriculture, null, tint = Color(0xFF4CAF50)) },
+            leadingIcon = { Icon(Icons.Default.Agriculture, null, tint = MaterialTheme.colorScheme.primary) },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -541,7 +542,7 @@ private fun FarmerDetailsStep(
         OutlinedButton(
             onClick = onGetLocationClick,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF4CAF50))
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
         ) {
             Icon(Icons.Default.MyLocation, contentDescription = null)
             Spacer(Modifier.width(8.dp))
@@ -651,9 +652,9 @@ private fun FarmerDetailsStep(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Error, null, tint = Color.Red)
+                    Icon(Icons.Default.Error, null, tint = MaterialTheme.colorScheme.error)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = error, color = Color.Red, fontSize = 14.sp)
+                    Text(text = error, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -673,13 +674,13 @@ private fun FarmerDetailsStep(
                     password.isNotBlank() &&
                     confirmPassword.isNotBlank(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF4CAF50)
+                containerColor = MaterialTheme.colorScheme.primary
             )
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
                 Icon(Icons.Default.Check, null)
@@ -701,7 +702,7 @@ private fun SectionHeader(title: String, icon: androidx.compose.ui.graphics.vect
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF4CAF50),
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -709,7 +710,7 @@ private fun SectionHeader(title: String, icon: androidx.compose.ui.graphics.vect
             text = title,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
     HorizontalDivider(

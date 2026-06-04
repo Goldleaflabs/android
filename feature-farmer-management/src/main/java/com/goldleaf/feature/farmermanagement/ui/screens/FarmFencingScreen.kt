@@ -281,13 +281,13 @@ private fun FarmStatistics(
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.ExpandMore else Icons.Default.Assessment,
                     contentDescription = null,
-                    tint = Color(0xFF2E7D32)
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = "Farm Stats",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2E7D32)
+color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -307,7 +307,7 @@ private fun StatisticRow(label: String, value: String) {
         modifier = Modifier.fillMaxWidth(0.6f), // Keep it compact
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, fontSize = 13.sp, color = Color.Gray)
+        Text(text = label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(text = value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
     }
 }

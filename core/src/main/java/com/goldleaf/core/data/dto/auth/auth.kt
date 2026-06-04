@@ -29,6 +29,11 @@ import com.goldleaf.core.data.local.ProductJourneyEntity
 import com.goldleaf.core.data.local.QualityParameterEntity
 import com.goldleaf.core.data.local.ComplianceChecklistEntity
 import com.goldleaf.core.data.local.PlotEntity
+import com.goldleaf.core.data.local.PaymentEntity
+import com.goldleaf.core.data.local.HarvestDeliveryEntity
+import com.goldleaf.core.data.local.BatchSalesEntity
+import com.goldleaf.core.data.local.DeductionEntity
+import com.goldleaf.core.data.local.FarmerPayoutInfoEntity
 import com.goldleaf.core.data.local.SeasonalPlanEntity
 import com.goldleaf.core.data.local.SoilTestEntity
 import com.goldleaf.core.data.local.TaskEntity
@@ -691,6 +696,11 @@ data class SyncDataDto(
     val complianceChecklist: List<ComplianceChecklistEntity>? = null,
     @SerializedName("plots")
     val plots: List<PlotEntity>? = null,
+    val payments: List<PaymentEntity>? = null,
+    val harvestDeliveries: List<HarvestDeliveryEntity>? = null,
+    val batchSales: List<BatchSalesEntity>? = null,
+    val farmerDeductions: List<DeductionEntity>? = null,
+    val farmerPayoutInfo: List<FarmerPayoutInfoEntity>? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
 
@@ -1063,4 +1073,30 @@ data class CropPerformanceDto(
     val batchCount: Int,
     val averageScore: Float,
     val averageGrade: String
+)
+
+// ==================== PAYMENT / REVENUE / NOTIFICATION DTOs ====================
+
+data class FarmerRevenueResponse(
+    val success: Boolean,
+    val data: FarmerRevenueData?
+)
+
+data class FarmerRevenueData(
+    val totalPaid: Double,
+    val successfullyPaid: Double,
+    val totalDeclaredKg: Double,
+    val totalConfirmedKg: Double,
+    val totalDeductions: Double,
+    val recentPayments: List<PaymentEntity>
+)
+
+data class FarmerPayoutInfoResponse(
+    val success: Boolean,
+    val data: FarmerPayoutInfoEntity?
+)
+
+data class NotificationListResponse(
+    val success: Boolean,
+    val data: List<NotificationDto>? = null
 )

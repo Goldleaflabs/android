@@ -121,14 +121,14 @@ fun CropCard(crop: CropEntity, onClick: () -> Unit) {
                 modifier = Modifier.size(50.dp).background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Spa, contentDescription = null, tint = Color(0xFF4CAF50))
+                Icon(Icons.Default.Spa, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
 
             Spacer(Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(crop.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(crop.variety ?: "Generic Variety", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(crop.variety ?: "Generic Variety", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 Spacer(Modifier.height(4.dp))
 
@@ -142,7 +142,7 @@ fun CropCard(crop: CropEntity, onClick: () -> Unit) {
                             text = it.name,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF2E7D32)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -170,13 +170,13 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         Text(
             text = "No crops found for this farm",
             style = MaterialTheme.typography.titleMedium,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = "Tap 'Add Crop' on the dashboard to get started.",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             textAlign = TextAlign.Center
         )
     }

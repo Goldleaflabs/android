@@ -71,10 +71,10 @@ fun SoilProfileScreen(
                             Icons.Default.Science,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = Color.Gray
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(Modifier.height(8.dp))
-                        Text("No soil tests recorded yet", color = Color.Gray)
+                        Text("No soil tests recorded yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(8.dp))
                         Button(onClick = { viewModel.showAddDialog() }) {
                             Text("Add Soil Test")
@@ -155,7 +155,7 @@ fun SoilTestCard(test: SoilTestEntity, onDelete: () -> Unit) {
                         Text(
                             text = it,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
@@ -163,7 +163,7 @@ fun SoilTestCard(test: SoilTestEntity, onDelete: () -> Unit) {
                         Icon(
                             Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = Color.Red,
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -196,7 +196,7 @@ fun SoilTestCard(test: SoilTestEntity, onDelete: () -> Unit) {
                 Text(
                     text = "Organic Matter: ${it}%",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -204,7 +204,7 @@ fun SoilTestCard(test: SoilTestEntity, onDelete: () -> Unit) {
                 Text(
                     text = "Moisture: ${it}%",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -213,7 +213,7 @@ fun SoilTestCard(test: SoilTestEntity, onDelete: () -> Unit) {
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -231,7 +231,7 @@ fun NutrientChip(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 11.sp
         )
     }

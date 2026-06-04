@@ -25,6 +25,11 @@ import com.goldleaf.core.data.local.ComplianceChecklistEntity
 import com.goldleaf.core.data.local.SeasonalPlanEntity
 import com.goldleaf.core.data.local.SoilTestEntity
 import com.goldleaf.core.data.local.PlotEntity
+import com.goldleaf.core.data.local.PaymentEntity
+import com.goldleaf.core.data.local.HarvestDeliveryEntity
+import com.goldleaf.core.data.local.BatchSalesEntity
+import com.goldleaf.core.data.local.DeductionEntity
+import com.goldleaf.core.data.local.FarmerPayoutInfoEntity
 import com.google.gson.annotations.SerializedName
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -489,6 +494,16 @@ interface ApiService {
     // ==================== FARM PLOTS ====================
     @POST("plots/sync")
     suspend fun syncPlots(@Body items: List<PlotEntity>): Response<SyncResponseDto>
+
+    // ==================== PAYMENTS & REVENUE ====================
+    @GET("revenue/{farmerId}")
+    suspend fun getFarmerRevenue(@Path("farmerId") farmerId: String): Response<FarmerRevenueResponse>
+
+    @GET("farmer/payout-info/{farmerId}")
+    suspend fun getPayoutInfo(@Path("farmerId") farmerId: String): Response<FarmerPayoutInfoResponse>
+
+    @PUT("farmer/payout-info/{farmerId}")
+    suspend fun updatePayoutInfo(@Path("farmerId") farmerId: String, @Body info: FarmerPayoutInfoEntity): Response<BaseResponse>
 
     @GET("api/v1/market/summary")
     suspend fun getMarketSummary( @Query("location") location: String ): Response<MarketSummary>

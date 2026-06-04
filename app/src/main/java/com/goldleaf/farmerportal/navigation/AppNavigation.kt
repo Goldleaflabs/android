@@ -40,6 +40,7 @@ import com.goldleaf.feature.cropmanagement.ui.seasonal.SeasonalPlanningScreen
 import com.goldleaf.feature.cropmanagement.ui.compliance.ComplianceTrackingScreen
 import com.goldleaf.feature.cropmanagement.ui.soil.SoilProfileScreen
 import com.goldleaf.feature.cropmanagement.ui.plots.PlotManagementScreen
+import com.goldleaf.feature.farmermanagement.ui.revenue.RevenueScreen
 import com.goldleaf.feature.farmermanagement.ui.ChangePasswordScreen
 import com.goldleaf.feature.trainingextension.ui.TrainingDetailsScreen
 import com.goldleaf.feature.trainingextension.ui.VideoPlayerScreen
@@ -81,6 +82,7 @@ object Routes {
     const val COMPLIANCE_TRACKING = "compliance_tracking/{farmId}"
     const val SOIL_PROFILE = "soil_profile/{farmId}"
     const val PLOT_MANAGEMENT = "farm_plots/{farmId}"
+    const val REVENUE = "revenue/{farmerId}"
 
 
    // Helper functions
@@ -105,6 +107,7 @@ object Routes {
     fun complianceTracking(farmId: String) = "compliance_tracking/$farmId"
     fun soilProfile(farmId: String) = "soil_profile/$farmId"
     fun plotManagement(farmId: String) = "farm_plots/$farmId"
+    fun revenue(farmerId: String) = "revenue/$farmerId"
 
 }
 
@@ -373,6 +376,17 @@ fun AppNavigation(
                 farmId = farmId,
                 onNavigateBack = { navController.popBackStack() },
                 onPlotClick = { /* future: plot detail with rotation */ }
+            )
+        }
+
+        composable(
+            route = Routes.REVENUE,
+            arguments = listOf(navArgument("farmerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val farmerId = backStackEntry.arguments?.getString("farmerId") ?: return@composable
+            RevenueScreen(
+                farmerId = farmerId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

@@ -32,6 +32,11 @@ import com.goldleaf.core.data.local.dao.SoilDao
 import com.goldleaf.core.data.local.dao.TaskDao
 import com.goldleaf.core.data.local.dao.WeatherDao
 import com.goldleaf.core.data.local.dao.PlotDao
+import com.goldleaf.core.data.local.dao.PaymentDao
+import com.goldleaf.core.data.local.dao.HarvestDeliveryDao
+import com.goldleaf.core.data.local.dao.BatchSalesDao
+import com.goldleaf.core.data.local.dao.DeductionDao
+import com.goldleaf.core.data.local.dao.FarmerPayoutInfoDao
 
 @Database(
     entities = [
@@ -64,9 +69,14 @@ import com.goldleaf.core.data.local.dao.PlotDao
         InputEntity::class,
         SeasonalPlanEntity::class,
         ComplianceChecklistEntity::class,
-        PlotEntity::class
+        PlotEntity::class,
+        PaymentEntity::class,
+        HarvestDeliveryEntity::class,
+        BatchSalesEntity::class,
+        DeductionEntity::class,
+        FarmerPayoutInfoEntity::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = false
 )
 
@@ -112,6 +122,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun seasonalPlanDao(): SeasonalPlanDao
     abstract fun complianceChecklistDao(): ComplianceChecklistDao
     abstract fun plotDao(): PlotDao
+    abstract fun paymentDao(): PaymentDao
+    abstract fun harvestDeliveryDao(): HarvestDeliveryDao
+    abstract fun batchSalesDao(): BatchSalesDao
+    abstract fun deductionDao(): DeductionDao
+    abstract fun farmerPayoutInfoDao(): FarmerPayoutInfoDao
 }
 
 // DATABASE BUILDER

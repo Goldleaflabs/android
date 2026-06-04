@@ -288,7 +288,7 @@ private fun PlanCard(
                 Icon(
                     imageVector = if (plan.isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                     contentDescription = if (plan.isCompleted) "Completed" else "Mark complete",
-                    tint = if (plan.isCompleted) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (plan.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

@@ -206,18 +206,18 @@ fun FarmSetupScreen(
                             modifier = Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF4CAF50))
+                            Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(8.dp))
                             Column {
                                 Text(
                                     uiState.locationName.ifBlank { "Selected Location" },
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF1B5E20)
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     "${uiState.district}, ${uiState.region}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF2E7D32)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }

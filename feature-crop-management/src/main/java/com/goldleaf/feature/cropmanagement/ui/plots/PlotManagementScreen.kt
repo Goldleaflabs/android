@@ -62,9 +62,9 @@ fun PlotManagementScreen(
             if (uiState.plots.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Grid3x3, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
+                        Icon(Icons.Default.Grid3x3, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(8.dp))
-                        Text("No plots defined yet", color = Color.Gray)
+                        Text("No plots defined yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(8.dp))
                         Button(onClick = { viewModel.showAddDialog() }) {
                             Text("Add Plot")
@@ -127,14 +127,14 @@ fun PlotCard(plot: PlotEntity, onDelete: () -> Unit, onClick: () -> Unit) {
                 Text(
                     text = "${plot.size} ${plot.sizeUnit}${plot.soilType?.let { " · $it" } ?: ""}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 plot.notes?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = Color.Gray, maxLines = 1)
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red)
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
             }
         }
     }

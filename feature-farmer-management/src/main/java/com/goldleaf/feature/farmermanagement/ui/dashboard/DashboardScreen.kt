@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Grid3x3
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -145,7 +146,7 @@ fun DashboardContent(
                         farmer.farmname?.let {
                             Text(
                                 text = it,
-                                color = Color.White.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                             )
                         }
                         Text(
@@ -205,7 +206,8 @@ fun DashboardContent(
                     QuickActionsSection(
                         navController = navController,
                         userRole = farmer.userRole,
-                        farmId = farmId
+                        farmId = farmId,
+                        farmerId = farmerId
                     )
                 }
 
@@ -240,7 +242,7 @@ fun LoadingState(
                 Spacer(Modifier.height(16.dp))
                 Text("Fetching your farm profile...", style = MaterialTheme.typography.bodyMedium)
             } else {
-                Icon(Icons.Default.CloudOff, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
+                Icon(Icons.Default.CloudOff, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(16.dp))
                 Text("Could not find local data.")
                 Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) {
@@ -280,13 +282,13 @@ private fun GreetingCard(
                 Text(
                     text = if (role == UserRole.VERIFIEDFARMER) "VERIFIED FARMER Access" else "Ready to grow today?",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                 )
             }
             Icon(
                 if (role == UserRole.VERIFIEDFARMER) Icons.Default.Verified else Icons.Default.Agriculture,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.5f),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
                 modifier = Modifier.size(48.dp)
             )
         }
@@ -357,7 +359,7 @@ private fun StatCard(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -369,7 +371,8 @@ private fun StatCard(
 private fun QuickActionsSection(
     navController: NavController,
     userRole: UserRole,
-    farmId: String?
+    farmId: String?,
+    farmerId: String?
 ) {
     val showVerificationDialog = remember { mutableStateOf(false) }
 
@@ -528,6 +531,19 @@ private fun QuickActionsSection(
             )
             Spacer(modifier = Modifier.weight(1f))
         }
+
+        Spacer(Modifier.height(12.dp))
+
+        // Row 8: Revenue
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QuickActionCard(
+                icon = Icons.Default.MonetizationOn,
+                title = "My Revenue",
+                onClick = { farmerId?.let { navController.navigate("revenue/$it") } },
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        }
     }
 }
 
@@ -619,7 +635,7 @@ private fun WeatherSummaryCard(
                 Spacer(Modifier.height(8.dp))
                 when {
                     uiState.isLoading -> Text("Loading...", color = MaterialTheme.colorScheme.surface)
-                    uiState.error != null -> Text("No connection", color = Color.White.copy(alpha = 0.8f))
+                    uiState.error != null -> Text("No connection", color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f))
                     else -> {
                         Text(
                             text = "${uiState.currentWeather?.temperature?.toInt() ?: "--"}Â°C",
@@ -630,7 +646,7 @@ private fun WeatherSummaryCard(
                         Text(
                             text = uiState.currentWeather?.condition ?: "Unknown",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.9f)
                         )
                     }
                 }
