@@ -76,7 +76,7 @@ import com.goldleaf.core.data.local.dao.FarmerPayoutInfoDao
         DeductionEntity::class,
         FarmerPayoutInfoEntity::class
     ],
-    version = 17,
+    version = 18,
     exportSchema = false
 )
 

@@ -3,20 +3,11 @@ package com.goldleaf.core.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.ForeignKey
 import androidx.room.Index
 import com.goldleaf.core.data.dto.farm.SoilType
 
 @Entity(
     tableName = "soil_tests",
-    foreignKeys = [
-        ForeignKey(
-            entity = FarmEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["farmId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [Index(value = ["farmId"])]
 )
 data class SoilTestEntity(

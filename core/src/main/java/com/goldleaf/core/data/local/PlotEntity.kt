@@ -7,14 +7,6 @@ import androidx.room.Index
 
 @Entity(
     tableName = "farm_plots",
-    foreignKeys = [
-        ForeignKey(
-            entity = FarmEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["farmId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [Index(value = ["farmId"])]
 )
 data class PlotEntity(

@@ -42,6 +42,7 @@ class CropDetailsViewModel @Inject constructor(
     val selectedTab: StateFlow<DetailTab> = _selectedTab.asStateFlow()
 
     private var currentCropId: String? = null
+    private var cachedFarmName: String = "Farm"
 
     fun loadCropDetails(cropId: String) {
         currentCropId = cropId
@@ -57,6 +58,7 @@ class CropDetailsViewModel @Inject constructor(
                 getCropsUseCase().collect { crops ->
                     val crop = crops.find { it.id == cropId }
                     if (crop != null) {
+                        cachedFarmName = cropRepository.getFarmById(crop.farmId)?.name ?: "Farm"
                         _uiState.value = _uiState.value.copy(
                             crop = crop,
                             isLoading = false,
@@ -130,7 +132,7 @@ class CropDetailsViewModel @Inject constructor(
         val growthStages = _uiState.value.growthStages
         val analytics = calculateAnalytics(tasks, monitoringRecords, growthStages)
         val crop = _uiState.value.crop
-        val cropDetails = crop?.toCropDetails(monitoringRecords, growthStages)
+        val cropDetails = crop?.toCropDetails(monitoringRecords, growthStages, cachedFarmName)
         val upcomingTasks = tasks.toUpcomingTasks()
         val recentActivities = generateRecentActivities(tasks, monitoringRecords)
 
@@ -170,7 +172,7 @@ class CropDetailsViewModel @Inject constructor(
         val growthStages = _uiState.value.growthStages
         val analytics = calculateAnalytics(tasks, monitoringRecords, growthStages)
         val crop = _uiState.value.crop
-        val cropDetails = crop?.toCropDetails(monitoringRecords, growthStages)
+        val cropDetails = crop?.toCropDetails(monitoringRecords, growthStages, cachedFarmName)
         val recentActivities = generateRecentActivities(tasks, monitoringRecords)
 
         _uiState.value = _uiState.value.copy(
@@ -187,7 +189,7 @@ class CropDetailsViewModel @Inject constructor(
         val growthStages = _uiState.value.growthStages
         val analytics = calculateAnalytics(tasks, records, growthStages)
         val crop = _uiState.value.crop
-        val cropDetails = crop?.toCropDetails(records, growthStages)
+        val cropDetails = crop?.toCropDetails(records, growthStages, cachedFarmName)
         val recentActivities = generateRecentActivities(tasks, records)
 
         android.util.Log.d("🌾 MONITORING", "✅ Updated UI state with ${records.size} monitoring records")
@@ -204,7 +206,7 @@ class CropDetailsViewModel @Inject constructor(
         val monitoringRecords = _uiState.value.monitoringRecords
         val analytics = calculateAnalytics(tasks, monitoringRecords, growthStages)
         val crop = _uiState.value.crop
-        val cropDetails = crop?.toCropDetails(monitoringRecords, growthStages)
+        val cropDetails = crop?.toCropDetails(monitoringRecords, growthStages, cachedFarmName)
 
         _uiState.value = _uiState.value.copy(
             growthStages = growthStages,
@@ -624,11 +626,12 @@ sealed class CropDetailsEvent {
     object ClearMessage : CropDetailsEvent()
 }
 
-// CropDetailsViewModel.kt
 // Extension function to convert Crop domain model to CropDetails UI model
+@Suppress("UNUSED_PARAMETER")
 private fun CropEntity.toCropDetails(
     monitoringRecords: List<CropMonitoringRecord>,
-    growthStages: List<CropGrowthStage>
+    growthStages: List<CropGrowthStage>,
+    farmName: String
 ): CropDetails {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     val displayFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -678,7 +681,7 @@ private fun CropEntity.toCropDetails(
         progressPercentage = progress,
         area = this.area,
         daysToHarvest = daysToHarvest.coerceAtLeast(0),
-        farmName = this.location,
+        farmName = farmName,
         plantingDate = displayFormat.format(plantingDate),
         expectedHarvestDate = displayFormat.format(harvestDate),
         soilType = this.notes ?: "Unknown", // Use notes field or add soilType to domain model

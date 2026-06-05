@@ -2,20 +2,11 @@ package com.goldleaf.core.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.ForeignKey
 import androidx.room.Index
 
 @Entity(
     tableName = "audit_records",
-    foreignKeys = [
-        ForeignKey(
-            entity = FarmEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["farmId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["farmId"])]  // ADD THIS
+    indices = [Index(value = ["farmId"])]
 )
 
 data class AuditRecordEntity(
