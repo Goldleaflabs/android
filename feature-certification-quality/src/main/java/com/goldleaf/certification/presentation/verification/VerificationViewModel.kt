@@ -5,7 +5,7 @@ package com.goldleaf.certification.presentation.verification
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.goldleaf.certification.domain.repository.BatchRepository
-import com.goldleaf.certification.domain.repository.VerificationResult
+import com.goldleaf.core.domain.model.VerificationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,44 +1,24 @@
 package com.goldleaf.feature.cropmanagement.ui.selection
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.goldleaf.core.data.local.PlotEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,18 +27,12 @@ fun CropSelectionScreen(
     onNavigateBack: () -> Unit,
     viewModel: SelectionListViewModel = hiltViewModel()
 ) {
-    // Collect the state from the fixed ViewModel
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Navigation trigger: Runs when isSaveSuccess becomes true
     LaunchedEffect(uiState.isSaveSuccess) {
-        if (uiState.isSaveSuccess) {
-            onNavigateBack()
-        }
+        if (uiState.isSaveSuccess) onNavigateBack()
     }
-
-    // Snackbar trigger: Runs when a message is set
     LaunchedEffect(uiState.snackbarMessage) {
         uiState.snackbarMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -98,16 +72,13 @@ fun CropSelectionScreen(
                 ) {
                     items(uiState.catalogCrops, key = { it.id }) { crop ->
                         val isSaving = uiState.savingCropIds.contains(crop.id)
-
                         Card(
-                            onClick = { viewModel.addCropToFarm(farmId, crop) },
-                            enabled = !isSaving, // 👈 DISPATCH: Disables clicks
+                            onClick = { viewModel.onCropSelected(crop) },
+                            enabled = !isSaving,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(180.dp)
-                                .graphicsLayer {
-                                    alpha = if (isSaving) 0.5f else 1f // Visual "disabled" look
-                                },
+                                .graphicsLayer { alpha = if (isSaving) 0.5f else 1f },
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Column(modifier = Modifier.fillMaxSize()) {
@@ -119,7 +90,6 @@ fun CropSelectionScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (isSaving) {
-                                        // Show spinner inside the card while saving
                                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                                     } else {
                                         Text(
@@ -130,7 +100,6 @@ fun CropSelectionScreen(
                                         )
                                     }
                                 }
-
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(crop.name, fontWeight = FontWeight.Bold, maxLines = 1)
                                     Text(
@@ -147,6 +116,58 @@ fun CropSelectionScreen(
         }
     }
 
+    // Plot selection dialog
+    if (uiState.showPlotDialog && uiState.selectedCrop != null) {
+        AddCropPlotDialog(
+            cropName = uiState.selectedCrop!!.name,
+            plots = uiState.plots,
+            onDismiss = { viewModel.dismissPlotDialog() },
+            onConfirm = { plotId -> viewModel.addCropWithPlot(uiState.selectedCrop!!, plotId) }
+        )
+    }
+}
 
+@Composable
+fun AddCropPlotDialog(
+    cropName: String,
+    plots: List<PlotEntity>,
+    onDismiss: () -> Unit,
+    onConfirm: (plotId: String?) -> Unit
+) {
+    var selectedPlotId by remember { mutableStateOf<String?>(null) }
 
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add $cropName") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (plots.isNotEmpty()) {
+                    Text("Assign to a plot (optional):", style = MaterialTheme.typography.bodyMedium)
+                    plots.forEach { plot ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedPlotId == plot.id,
+                                onClick = { selectedPlotId = plot.id }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("${plot.name} (${plot.size} ${plot.sizeUnit})", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text("Crop rotation will be checked against the selected plot.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    Text("No plots defined yet. You can create them later from the Dashboard.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selectedPlotId) }) { Text("Add to Farm") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }

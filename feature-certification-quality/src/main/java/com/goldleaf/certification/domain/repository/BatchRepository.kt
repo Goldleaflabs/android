@@ -1,13 +1,11 @@
 package com.goldleaf.certification.domain.repository
 
-
-import com.goldleaf.core.data.local.LabTest
-import com.goldleaf.core.data.local.BlockchainRecord
-import com.goldleaf.core.data.local.ProductBatchEntity
+import com.goldleaf.core.data.local.*
+import com.goldleaf.core.domain.model.VerificationResult
+import com.goldleaf.feature.cropmanagement.ui.activity.CropInfo
 import kotlinx.coroutines.flow.Flow
 
 interface BatchRepository {
-    // Create batch
     suspend fun createBatch(
         batchNumber: String,
         productType: String,
@@ -18,27 +16,22 @@ interface BatchRepository {
         farmerName: String,
         cropId: String = ""
     ): Result<ProductBatchEntity>
-
-    // Get batches
+    suspend fun syncBatches(farmerId: String): Result<List<ProductBatchEntity>>
+    suspend fun loadBatchesForFarmer(farmerId: String): List<ProductBatchEntity>
+    suspend fun loadReadyCropsForFarmer(farmerId: String): List<CropInfo>
+    suspend fun getLabTests(batchId: String): Result<List<LabTest>>
+    suspend fun getBlockchainRecord(batchId: String): Result<BlockchainRecord?>
+    suspend fun verifyProduct(batchNumber: String): Result<VerificationResult>
     fun getAllBatches(): Flow<List<ProductBatchEntity>>
     fun getBatchById(batchId: String): Flow<ProductBatchEntity?>
     fun getBatchByNumber(batchNumber: String): Flow<ProductBatchEntity?>
-
-    // Server sync
-    suspend fun syncBatches(farmerId: String): Result<List<ProductBatchEntity>>
-
-    // Read-only from server
-    suspend fun getLabTests(batchId: String): Result<List<LabTest>>
-    suspend fun getBlockchainRecord(batchId: String): Result<BlockchainRecord?>
-
-    // Consumer verification
-    suspend fun verifyProduct(batchNumber: String): Result<VerificationResult>
 }
 
-data class VerificationResult(
-    val isValid: Boolean,
-    val message: String,
-    val batch: ProductBatchEntity?,
-    val blockchainRecord: BlockchainRecord?,
-    val labTests: List<LabTest>
+data class CreateBatchRequest(
+    val cropId: String,
+    val farmId: String,
+    val quantity: Double,
+    val unit: String,
+    val harvestDate: Long,
+    val farmerId: String
 )

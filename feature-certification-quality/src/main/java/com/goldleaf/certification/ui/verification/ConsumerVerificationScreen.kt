@@ -112,7 +112,7 @@ fun ConsumerVerificationScreen(
 }
 
 @Composable
-fun VerificationResultCard(result: com.goldleaf.certification.domain.repository.VerificationResult) {
+fun VerificationResultCard(result: com.goldleaf.core.domain.model.VerificationResult) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -150,7 +150,7 @@ fun VerificationResultCard(result: com.goldleaf.certification.domain.repository.
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            result.batch?.let { batch ->
+            result.batch?.let { batchNumber ->
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(16.dp))
@@ -160,23 +160,7 @@ fun VerificationResultCard(result: com.goldleaf.certification.domain.repository.
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Batch: ${batch.batchNumber}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "Product: ${batch.productType}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "Quantity: ${batch.quantity} ${batch.unit}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "Harvest Date: ${batch.harvestDate}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "Farmer: ${batch.farmerName}",
+                        text = "Batch: $batchNumber",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

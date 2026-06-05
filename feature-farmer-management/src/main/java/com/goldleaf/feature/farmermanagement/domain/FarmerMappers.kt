@@ -34,7 +34,8 @@ fun Farmer.toEntity(): FarmerEntity {
         longitude = contactInfo.address?.longitude,
         lastSyncTime = lastSyncTime,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        userRole = userRole.name
     )
 }
 

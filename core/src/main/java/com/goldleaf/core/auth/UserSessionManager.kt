@@ -157,7 +157,8 @@ class UserSessionManager @Inject constructor(
                     longitude = dto.contactInfo?.address?.longitude,
                     lastSyncTime = System.currentTimeMillis(),
                     createdAt = dto.createdAt,
-                    updatedAt = dto.updatedAt
+                    updatedAt = dto.updatedAt,
+                    userRole = dto.userRole.name
                 )
         farmerDao.insertFarmer(entity)
         setUserRole(dto.userRole)

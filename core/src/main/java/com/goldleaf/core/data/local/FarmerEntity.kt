@@ -25,5 +25,6 @@ data class FarmerEntity(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val farmerId: String? = null,
-    val farmId: String? = null
+    val farmId: String? = null,
+    val userRole: String? = null
 )

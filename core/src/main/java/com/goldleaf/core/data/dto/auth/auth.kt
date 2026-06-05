@@ -232,7 +232,10 @@ data class FarmerDto(
     val profileImage: String? = null,
 
     @SerializedName("farms")
-    val farms: List<FarmDto>? = null
+    val farms: List<FarmDto>? = null,
+
+    @SerializedName("userRole")
+    val userRole: String? = null
 )
 
 // =====================================================

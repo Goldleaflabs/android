@@ -2,6 +2,7 @@ package com.goldleaf.feature.farmermanagement.ui.auth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.goldleaf.core.auth.UserRole
 import com.goldleaf.core.auth.UserSessionManager
 import com.goldleaf.core.data.api.ApiService
 import com.goldleaf.core.data.dto.auth.LoginRequest
@@ -80,7 +81,11 @@ class LoginViewModel @Inject constructor(
                         return@launch
                     }
 
-                userSession.startSession(userId = farmerId, authToken = token)
+                val role = try {
+                    body.farmer?.userRole?.let { UserRole.valueOf(it) }
+                } catch (e: Exception) { null }
+
+                userSession.startSession(userId = farmerId, authToken = token, role = role ?: UserRole.FARMER)
                 _loginState.value = LoginState.Success(farmerId)
 
             } catch (e: Exception) {

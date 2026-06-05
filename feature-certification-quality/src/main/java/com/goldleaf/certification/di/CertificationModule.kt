@@ -1,6 +1,7 @@
 package com.goldleaf.certification.di
 
 
+import com.goldleaf.core.auth.UserSessionManager
 import com.goldleaf.core.data.local.dao.ProductBatchDao
 import com.goldleaf.certification.data.remote.CertificationApiService
 import com.goldleaf.certification.data.repository.BatchRepositoryImpl
@@ -25,15 +26,14 @@ object CertificationModule {
         return retrofit.create(CertificationApiService::class.java)
     }
 
-
-
     @Provides
     @Singleton
     fun provideBatchRepository(
         apiService: CertificationApiService,
-        batchDao: ProductBatchDao
+        batchDao: ProductBatchDao,
+        userSession: UserSessionManager
     ): BatchRepository {
-        return BatchRepositoryImpl(apiService, batchDao)
+        return BatchRepositoryImpl(apiService, batchDao, userSession)
     }
 
     @Provides

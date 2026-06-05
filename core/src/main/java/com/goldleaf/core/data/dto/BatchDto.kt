@@ -3,6 +3,7 @@ package com.goldleaf.core.data.dto
 import com.goldleaf.core.data.local.BlockchainRecord
 import com.goldleaf.core.data.local.BlockchainStatus
 import com.goldleaf.core.data.local.LabTest
+import com.goldleaf.core.data.local.ProductBatchEntity
 import com.goldleaf.core.domain.model.VerificationResult
 
 
@@ -86,10 +87,25 @@ data class VerificationResponseDto(
 
 // Extension function to convert DTO to domain model
 fun VerificationResponseDto.toDomainModel(): VerificationResult {
+    val batchEntity = this.batch?.let { dto ->
+        ProductBatchEntity(
+            id = dto.id,
+            batchNumber = dto.batchNumber,
+            productType = dto.productType,
+            quantity = dto.quantity,
+            unit = dto.unit,
+            harvestDate = dto.harvestDate,
+            farmerId = dto.farmerId,
+            farmerName = dto.farmerName,
+            qualityGrade = dto.qualityGrade,
+            blockchainHash = dto.blockchainHash,
+            blockchainStatus = dto.blockchainStatus
+        )
+    }
     return VerificationResult(
         isValid = this.isValid,
         message = this.message,
-        batch = this.batch?.batchNumber, // Extract batch number as String
+        batch = batchEntity,
         blockchainRecord = this.blockchainRecord?.toDomainModel(),
         labTests = this.labTests?.map { it.toDomainModel() } ?: emptyList()
     )

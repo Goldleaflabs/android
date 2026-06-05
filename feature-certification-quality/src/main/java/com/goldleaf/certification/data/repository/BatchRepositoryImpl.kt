@@ -1,15 +1,18 @@
 package com.goldleaf.certification.data.repository
 
+import com.goldleaf.core.auth.UserSessionManager
 import com.goldleaf.core.data.local.dao.ProductBatchDao
 import com.goldleaf.core.data.local.ProductBatchEntity
 import com.goldleaf.certification.data.remote.CertificationApiService
 import com.goldleaf.certification.domain.repository.BatchRepository
-import com.goldleaf.certification.domain.repository.VerificationResult
+import com.goldleaf.core.domain.model.VerificationResult
 import com.goldleaf.core.data.dto.CreateBatchRequest
 import com.goldleaf.core.data.local.BlockchainRecord
 import com.goldleaf.core.data.local.BlockchainStatus
 import com.goldleaf.core.data.mapper.*
 import com.goldleaf.core.data.local.LabTest
+import com.goldleaf.core.data.dto.toDomainModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -19,10 +22,17 @@ import javax.inject.Inject
 
 class BatchRepositoryImpl @Inject constructor(
     private val apiService: CertificationApiService,
-    private val batchDao: ProductBatchDao
+    private val batchDao: ProductBatchDao,
+    private val userSession: UserSessionManager
 ) : BatchRepository {
 
-     override suspend fun createBatch(
+    private val authToken: String
+        get() {
+            val token = userSession.getAuthTokenSync()
+            return if (token != null) "Bearer $token" else ""
+        }
+
+    override suspend fun createBatch(
         batchNumber: String,
         productType: String,
         quantity: Double,
@@ -30,17 +40,14 @@ class BatchRepositoryImpl @Inject constructor(
         harvestDate: String,
         farmerId: String,
         farmerName: String,
-         cropId: String
+        cropId: String
     ): Result<ProductBatchEntity> {
         return try {
-
-
             val harvestDateLong = LocalDate.parse(harvestDate)
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
 
-            // Create local entity
             val entity = ProductBatchEntity(
                 id = UUID.randomUUID().toString(),
                 batchNumber = batchNumber,
@@ -53,17 +60,14 @@ class BatchRepositoryImpl @Inject constructor(
                 cropId = cropId
             )
 
-            // Save locally
             batchDao.insertBatch(entity)
 
-            // Try to sync to server
             try {
                 val request = CreateBatchRequest(
                     batchNumber, productType, quantity, unit,
                     harvestDateLong, farmerId, farmerName
                 )
-                val response = apiService.createBatch("Bearer TOKEN", request)
-
+                val response = apiService.createBatch(authToken, request)
                 if (response.isSuccessful && response.body() != null) {
                     val dto = response.body()!!
                     val updatedEntity = entity.copy(
@@ -78,7 +82,6 @@ class BatchRepositoryImpl @Inject constructor(
                     Result.success(entity)
                 }
             } catch (e: Exception) {
-                // Offline - batch saved locally
                 Result.success(entity)
             }
         } catch (e: Exception) {
@@ -94,19 +97,23 @@ class BatchRepositoryImpl @Inject constructor(
 
     override fun getBatchById(batchId: String): Flow<ProductBatchEntity?> {
         return batchDao.getBatchById(batchId).map { it?.toDomain() }
-
     }
 
     override fun getBatchByNumber(batchNumber: String): Flow<ProductBatchEntity?> {
         return batchDao.getBatchByNumber(batchNumber).map { it?.toDomain() }
-
     }
 
+    override suspend fun loadBatchesForFarmer(farmerId: String): List<ProductBatchEntity> {
+        return batchDao.getAllBatches().map { list -> list.map { it.toDomain() } }.first()
+    }
 
+    override suspend fun loadReadyCropsForFarmer(farmerId: String): List<com.goldleaf.feature.cropmanagement.ui.activity.CropInfo> {
+        return emptyList()
+    }
 
     override suspend fun syncBatches(farmerId: String): Result<List<ProductBatchEntity>> {
         return try {
-            val response = apiService.getFarmerBatches("Bearer TOKEN", farmerId)
+            val response = apiService.getFarmerBatches(authToken, farmerId)
             if (response.isSuccessful && response.body() != null) {
                 val batches = response.body()!!.map { dto ->
                     ProductBatchEntity(
@@ -122,7 +129,7 @@ class BatchRepositoryImpl @Inject constructor(
                         blockchainHash = dto.blockchainHash,
                         blockchainStatus = dto.blockchainStatus,
                         blockchainTimestamp = dto.blockchainTimestamp,
-                        createdAt =  System.currentTimeMillis(),
+                        createdAt = System.currentTimeMillis(),
                         syncedToServer = true
                     )
                 }
@@ -138,7 +145,7 @@ class BatchRepositoryImpl @Inject constructor(
 
     override suspend fun getLabTests(batchId: String): Result<List<LabTest>> {
         return try {
-            val response = apiService.getLabTests("Bearer TOKEN", batchId)
+            val response = apiService.getLabTests(authToken, batchId)
             if (response.isSuccessful && response.body() != null) {
                 val tests = response.body()!!.map { dto ->
                     LabTest(
@@ -164,7 +171,7 @@ class BatchRepositoryImpl @Inject constructor(
 
     override suspend fun getBlockchainRecord(batchId: String): Result<BlockchainRecord?> {
         return try {
-            val response = apiService.getBlockchainRecord("Bearer TOKEN", batchId)
+            val response = apiService.getBlockchainRecord(authToken, batchId)
             if (response.isSuccessful && response.body() != null) {
                 val dto = response.body()!!
                 val record = BlockchainRecord(
@@ -189,16 +196,7 @@ class BatchRepositoryImpl @Inject constructor(
         return try {
             val response = apiService.verifyProduct(batchNumber)
             if (response.isSuccessful && response.body() != null) {
-                val dto = response.body()!!
-                // Map DTO to domain models (simplified for brevity)
-                val result = VerificationResult(
-                    isValid = dto.isValid,
-                    message = dto.message,
-                    batch = dto.batch?.toDomain(),
-                    blockchainRecord = dto.blockchainRecord?.toDomain(),
-                    labTests = dto.labTests?.map { it.toDomain() } ?: emptyList()
-                )
-                Result.success(result)
+                Result.success(response.body()!!.toDomainModel())
             } else {
                 Result.failure(Exception("Verification failed"))
             }
@@ -208,19 +206,11 @@ class BatchRepositoryImpl @Inject constructor(
     }
 
     private fun ProductBatchEntity.toDomain() = ProductBatchEntity(
-        id = id,
-        batchNumber = batchNumber,
-        productType = productType,
-        quantity = quantity,
-        unit = unit,
-        harvestDate = harvestDate,
-        farmerId = farmerId,
-        farmerName = farmerName,
-        qualityGrade = qualityGrade,
-        blockchainHash = blockchainHash,
-        blockchainStatus = blockchainStatus,
-        blockchainTimestamp = blockchainTimestamp,
-        createdAt = createdAt,
-        syncedToServer = syncedToServer
+        id = id, batchNumber = batchNumber, productType = productType,
+        quantity = quantity, unit = unit, harvestDate = harvestDate,
+        farmerId = farmerId, farmerName = farmerName,
+        qualityGrade = qualityGrade, blockchainHash = blockchainHash,
+        blockchainStatus = blockchainStatus, blockchainTimestamp = blockchainTimestamp,
+        createdAt = createdAt, syncedToServer = syncedToServer
     )
 }

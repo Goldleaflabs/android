@@ -7,6 +7,8 @@ import com.goldleaf.core.auth.UserSessionManager
 import com.goldleaf.core.data.local.CropEntity
 import com.goldleaf.core.data.local.CropMasterEntity
 import com.goldleaf.core.data.local.CropStatus
+import com.goldleaf.core.data.local.PlotEntity
+import com.goldleaf.core.data.local.dao.PlotDao
 import com.goldleaf.feature.cropmanagement.domain.repository.CropRepository
 import com.goldleaf.feature.cropmanagement.ui.activity.CropInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,110 +18,101 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
+data class SelectionUiState(
+    val isLoading: Boolean = false,
+    val catalogCrops: List<CropInfo> = emptyList(),
+    val rawEntities: List<CropMasterEntity> = emptyList(),
+    val savingCropIds: Set<String> = emptySet(),
+    val snackbarMessage: String? = null,
+    val isSaveSuccess: Boolean = false,
+    // Plot selection
+    val plots: List<PlotEntity> = emptyList(),
+    val selectedCrop: CropInfo? = null,
+    val showPlotDialog: Boolean = false
+)
 
-
-import java.util.UUID
 @HiltViewModel
 class SelectionListViewModel @Inject constructor(
     private val cropRepository: CropRepository,
-    private val userSession: UserSessionManager, // ✅ Hilt injects it here
-    savedStateHandle: androidx.lifecycle.SavedStateHandle  // ✅ Get farmId from nav args
+    private val plotDao: PlotDao,
+    private val userSession: UserSessionManager,
+    savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
     private val farmId: String = checkNotNull(savedStateHandle["farmId"])
-    
+
     private val _uiState = MutableStateFlow(SelectionUiState(isLoading = true))
     val uiState: StateFlow<SelectionUiState> = _uiState.asStateFlow()
 
     init {
         observeDatabase()
         refreshCatalog()
+        loadPlots()
+    }
+
+    private fun loadPlots() {
+        viewModelScope.launch {
+            val plots = plotDao.getPlotsByFarmId(farmId)
+            _uiState.update { it.copy(plots = plots) }
+        }
     }
 
     private fun observeDatabase() {
         viewModelScope.launch {
-            // Combine two flows:
-            // 1. All crops from catalog
-            // 2. Crops already on this farm
             cropRepository.getAllCrops().collect { catalogEntities ->
-                // Get the farm's current crops (exclude these from the list)
                 val farmCrops = cropRepository.getCropsByFarmId(farmId)
-                // Only active (non-terminal) crops block re-selection across seasons
                 val activeStatuses = listOf(CropStatus.PLANNED, CropStatus.PLANTED, CropStatus.GROWING)
                 val activeFarmCrops = farmCrops.filter { it.status in activeStatuses }
-                val farmCropIds = activeFarmCrops
-                    .map { it.cropId }
-                    .filter { it.isNotEmpty() }
-                    .toSet()
-                val farmCropNames = activeFarmCrops
-                    .map { it.name.trim().lowercase() }
-                    .toSet()
+                val farmCropIds = activeFarmCrops.map { it.cropId }.filter { it.isNotEmpty() }.toSet()
+                val farmCropNames = activeFarmCrops.map { it.name.trim().lowercase() }.toSet()
 
-                // Filter catalog to show only crops NOT already actively growing on the farm.
-                // Uses master cropId when available; falls back to name for legacy crops.
                 val availableCrops = catalogEntities.filter { catalogCrop ->
                     catalogCrop.cropId !in farmCropIds &&
                     catalogCrop.cropName.trim().lowercase() !in farmCropNames
                 }
 
-                val mapped = availableCrops.map { entity ->
-                    mapToCropInfo(entity)
-                }
-
-                _uiState.update { it.copy(
-                    catalogCrops = mapped,
-                    rawEntities = availableCrops,
-                    isLoading = false
-                ) }
+                val mapped = availableCrops.map { mapToCropInfo(it) }
+                _uiState.update { it.copy(catalogCrops = mapped, rawEntities = availableCrops, isLoading = false) }
             }
         }
     }
 
     fun refreshCatalog() {
         viewModelScope.launch {
-            // Only show loading if the list is currently empty
-            if (_uiState.value.catalogCrops.isEmpty()) {
-                _uiState.update { it.copy(isLoading = true) }
-            }
-
-            try {
-                cropRepository.syncCrops()
-            } catch (e: Exception) {
-                // If sync fails and we still have no data, stop the spinner so we can show "Retry"
-                if (_uiState.value.catalogCrops.isEmpty()) {
-                    _uiState.update { it.copy(isLoading = false) }
-                }
+            if (_uiState.value.catalogCrops.isEmpty()) _uiState.update { it.copy(isLoading = true) }
+            try { cropRepository.syncCrops() }
+            catch (e: Exception) {
+                if (_uiState.value.catalogCrops.isEmpty()) _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
 
+    /** Called when user taps a crop card — shows plot selection dialog */
+    fun onCropSelected(crop: CropInfo) {
+        _uiState.update { it.copy(selectedCrop = crop, showPlotDialog = true) }
+    }
 
-    fun addCropToFarm(farmId: String, selectedCrop: CropInfo) {
+    fun dismissPlotDialog() {
+        _uiState.update { it.copy(showPlotDialog = false, selectedCrop = null) }
+    }
 
-        Log.d("SelectionViewModel", "🔥 addCropToFarm CALLED - farmId: $farmId, crop: ${selectedCrop.name}")
+    /** Called after user selects a plot and confirms */
+    fun addCropWithPlot(selectedCrop: CropInfo, plotId: String?) {
+        Log.d("SelectionViewModel", "addCropToFarm - farmId: $farmId, crop: ${selectedCrop.name}, plot: $plotId")
+        _uiState.update { it.copy(showPlotDialog = false) }
 
         viewModelScope.launch {
-            Log.d("SelectionViewModel", "🚀 Inside coroutine launch")
-
-            // 1. Disable the specific crop card
-            _uiState.update { it.copy(
-                savingCropIds = it.savingCropIds + selectedCrop.id
-            )}
-
-            Log.d("SelectionViewModel", "✅ Updated savingCropIds: ${_uiState.value.savingCropIds}")
+            _uiState.update { it.copy(savingCropIds = it.savingCropIds + selectedCrop.id) }
 
             val farmerId = userSession.currentUserId.value
-                ?: userSession.currentUserId.first() // Fallback to fetching first emission
+                ?: userSession.currentUserId.first()
                 ?: return@launch
-
-            Log.d("SelectionViewModel", "👤 FarmerId: $farmerId")
 
             val now = java.time.LocalDateTime.now().toString()
             val cropInstanceId = UUID.randomUUID().toString()
-
-            Log.d("SelectionViewModel", "📡 About to call createCrop...")
 
             val result = cropRepository.createCrop(
                 CropEntity(
@@ -128,20 +121,18 @@ class SelectionListViewModel @Inject constructor(
                     farmerId = farmerId,
                     name = selectedCrop.name,
                     variety = selectedCrop.variety,
+                    plotId = plotId,
                     createdAt = now,
                     updatedAt = now,
                     cropId = selectedCrop.id
                 )
             )
-            Log.d("SelectionViewModel", "📥 Result received: ${result.isSuccess}")
 
-            // 2. Handle outcome
             if (result.isSuccess) {
-                // ✅ Show snackbar and navigate immediately - NO DELAY (local data already saved)
                 _uiState.update { it.copy(
                     snackbarMessage = "${selectedCrop.name} added to farm!",
                     savingCropIds = it.savingCropIds - selectedCrop.id,
-                    isSaveSuccess = true  // Navigate immediately after local save
+                    isSaveSuccess = true
                 )}
             } else {
                 _uiState.update { it.copy(
@@ -156,9 +147,7 @@ class SelectionListViewModel @Inject constructor(
         _uiState.update { it.copy(snackbarMessage = null) }
     }
 
-
     private fun mapToCropInfo(entity: CropMasterEntity): CropInfo {
-
         return CropInfo(
             id = entity.cropId,
             name = entity.cropName,
@@ -167,13 +156,3 @@ class SelectionListViewModel @Inject constructor(
         )
     }
 }
-
-data class SelectionUiState(
-    val isLoading: Boolean = false,
-    val catalogCrops: List<CropInfo> = emptyList(),
-    val rawEntities: List<CropMasterEntity> = emptyList(),
-    val farmerId: String? = null, // ✅ Fixed: Added '?' to allow null
-    val savingCropIds: Set<String> = emptySet(), // Tracks which items are currently saving
-    val snackbarMessage: String? = null,
-    val isSaveSuccess: Boolean = false
-)
