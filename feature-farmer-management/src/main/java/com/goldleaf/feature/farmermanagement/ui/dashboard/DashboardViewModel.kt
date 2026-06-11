@@ -9,6 +9,7 @@ import com.goldleaf.core.data.local.CropEntity
 import com.goldleaf.core.data.local.FarmEntity
 import com.goldleaf.core.data.local.TaskEntity
 import com.goldleaf.core.data.local.dao.CropDao
+import com.goldleaf.core.data.local.dao.PlotDao
 import com.goldleaf.feature.cropmanagement.domain.repository.TaskRepository
 import com.goldleaf.feature.farmermanagement.domain.repository.FarmerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +26,8 @@ class DashboardViewModel @Inject constructor(
     private val userSession: UserSessionManager,
     private val farmerRepository: FarmerRepository,
     private val tasksRepository: TaskRepository,
-    private val cropDao: CropDao
+    private val cropDao: CropDao,
+    private val plotDao: PlotDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -91,14 +93,20 @@ class DashboardViewModel @Inject constructor(
                         allFarms.find { it.id == selectedFarmId }?.name
                     }
 
-                    observeFarmData(allFarms)
+                    observeFarmData(allFarms, selectedFarmId)
                 }
         }
     }
 
-    private fun observeFarmData(allFarms: List<Farm>) {
+    private fun observeFarmData(allFarms: List<Farm>, selectedFarmId: String = "all") {
+        val targetFarms = if (selectedFarmId == "all" || selectedFarmId.isEmpty()) {
+            allFarms
+        } else {
+            allFarms.filter { it.id == selectedFarmId }
+        }
+
         viewModelScope.launch {
-            val farmDataFlows = allFarms.map { farm ->
+            val farmDataFlows = targetFarms.map { farm ->
                 combine(
                     farmerRepository.getFarmCropsFlow(farm.id),
                     tasksRepository.getTasksByFarmIdFlow(farm.id)
@@ -123,10 +131,15 @@ class DashboardViewModel @Inject constructor(
 
                 AggregatedData(allCrops, allTasks, allActivities)
             }.collect { (crops, tasks, activities) ->
+                // Load plot count — sum plots across target farms
+                var plotCount = 0
+                try { for (f in targetFarms) plotCount += plotDao.getPlotsByFarmId(f.id).size } catch (_: Exception) {}
+
                 _uiState.update { currentState ->
                     currentState.copy(
                         farms = allFarms,
                         totalFarms = allFarms.size,
+                        totalPlots = plotCount,
                         activeCrops = crops.size,
                         pendingTasks = tasks.size,
                         recentActivities = activities
@@ -196,6 +209,7 @@ private data class AggregatedData(
 data class DashboardUiState(
     val farms: List<Farm> = emptyList(),
     val totalFarms: Int = 0,
+    val totalPlots: Int = 0,
     val activeCrops: Int = 0,
     val pendingTasks: Int = 0,
     val recentActivities: List<String> = emptyList(),

@@ -375,14 +375,16 @@ class FarmSetupViewModel @Inject constructor(
     fun clearError() = _uiState.update { it.copy(error = null) }
 
     fun updateLocation(latitude: Double, longitude: Double) {
-        _uiState.update {
-            it.copy(
-                currentLocation = LatLng(latitude, longitude),
-                // clear name/district/region since the point moved; user can rename if needed
-                locationName = "",
-                district = "",
-                region = ""
-            )
+        viewModelScope.launch {
+            val address = reverseGeocode(latitude, longitude)
+            _uiState.update {
+                it.copy(
+                    currentLocation = LatLng(latitude, longitude),
+                    locationName = address.fullAddress,
+                    district = address.county,
+                    region = address.ward
+                )
+            }
         }
     }
 }

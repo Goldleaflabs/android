@@ -196,11 +196,9 @@ class CropRepositoryImpl @Inject constructor(
                 if (response.isSuccessful) {
                     Result.success(crop)
                 } else {
-                    // API failed but data is safe locally
                     Result.success(crop)
                 }
             } catch (e: Exception) {
-                // Network error - data is safe locally, will sync when online
                 Result.success(crop)
             }
         } catch (e: Exception) {

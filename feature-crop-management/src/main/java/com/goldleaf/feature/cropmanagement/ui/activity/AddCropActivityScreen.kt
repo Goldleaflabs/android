@@ -41,11 +41,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,9 +66,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.goldleaf.core.data.local.CropStatus
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -165,24 +170,44 @@ fun AddCropTasksScreen(
             }
 
             // 3. Date Input (Mandatory)
-            OutlinedTextField(
-                value = activityDate,
-                onValueChange = { activityDate = it },
-                label = { Text("Date *") },
-                isError = attemptedSave && activityDate.isBlank(),
-                supportingText = {
-                    if (attemptedSave && activityDate.isBlank()) Text("Date is required")
-                },
-                trailingIcon = {
-                    IconButton(onClick = {
-                        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-                        activityDate = "${now.year}-${now.monthNumber.toString().padStart(2, '0')}-${now.dayOfMonth.toString().padStart(2, '0')}"
-                    }) {
-                        Icon(Icons.Default.Today, contentDescription = "Today")
-                    }
-                },
+            var showDatePicker by remember { mutableStateOf(false) }
+            val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+
+            OutlinedButton(
+                onClick = { showDatePicker = true },
                 modifier = Modifier.fillMaxWidth()
-            )
+            ) {
+                Icon(Icons.Default.Today, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (activityDate.isNotBlank()) activityDate else "Select date *")
+            }
+            if (attemptedSave && activityDate.isBlank()) {
+                Text("Date is required", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            if (showDatePicker) {
+                val datePickerState = rememberDatePickerState(
+                    initialSelectedDateMillis = if (activityDate.isNotBlank()) {
+                        try { dateFormat.parse(activityDate)?.time } catch (_: Exception) { null }
+                    } else null
+                )
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                activityDate = dateFormat.format(Date(millis))
+                            }
+                            showDatePicker = false
+                        }) { Text("OK") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
 
             // 4. Description (Mandatory)
             OutlinedTextField(

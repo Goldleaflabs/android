@@ -109,7 +109,7 @@ fun CropCard(crop: CropEntity, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Row(
@@ -117,8 +117,8 @@ fun CropCard(crop: CropEntity, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Simple Icon Placeholder
-            Box(
-                modifier = Modifier.size(50.dp).background(Color(0xFFE8F5E9), RoundedCornerShape(8.dp)),
+                Box(
+                    modifier = Modifier.size(50.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.Spa, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -134,7 +134,7 @@ fun CropCard(crop: CropEntity, onClick: () -> Unit) {
 
                 // Status Chip
                 Surface(
-                    color = Color(0xFFE8F5E9),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     crop.status?.let {

@@ -83,6 +83,8 @@ class CropDetailsViewModel @Inject constructor(
         }
     }
 
+    private var taskCollectionJob: kotlinx.coroutines.Job? = null
+
     private suspend fun loadRelatedData(cropId: String) {
         try {
             // Load pipeline stages from cached repository
@@ -90,24 +92,22 @@ class CropDetailsViewModel @Inject constructor(
                 pipelineStages = pipelineRepository.stages.value
             )
 
-            // Subscribe to reactive streams for tasks and monitoring
-            viewModelScope.launch {
+            // Cancel previous task collection and start fresh
+            taskCollectionJob?.cancel()
+            taskCollectionJob = viewModelScope.launch {
                 taskRepository.getTasksFlow(cropId).collect { tasks ->
                     updateTasksInState(tasks)
                 }
             }
 
-            // ✅ FIXED: Load monitoring records directly from MonitoringRepository
-            // This ensures newly created records show up in the UI
-            viewModelScope.launch {
-                monitoringRepository.getMonitoringRecordsByCropId(cropId)
-                    .onSuccess { records ->
-                        updateMonitoringRecordsInState(records)
-                    }
-                    .onFailure { error ->
-                        android.util.Log.w("🌾 MONITORING", "⚠️ Failed to load monitoring records: ${error.message}")
-                    }
-            }
+            // Load monitoring records once from repository
+            monitoringRepository.getMonitoringRecordsByCropId(cropId)
+                .onSuccess { records ->
+                    updateMonitoringRecordsInState(records)
+                }
+                .onFailure { error ->
+                    android.util.Log.w("🌾 MONITORING", "⚠️ Failed to load monitoring records: ${error.message}")
+                }
 
             viewModelScope.launch {
                 cropRepository.getActivitiesByCropIdFlow(cropId).collect { activities ->
@@ -248,17 +248,16 @@ class CropDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 android.util.Log.d("🌾 MONITORING", "📝 ViewModel.addMonitoringRecord() called for cropId=${record.cropId}")
-                android.util.Log.d("🌾 MONITORING", "   Health: ${record.healthStatus}, Moisture: ${record.moistureLevel}%, Weather: ${record.weatherConditions}")
-                
+
                 val result = monitoringRepository.insertMonitoringRecord(record)
 
                 result.onSuccess { savedRecord ->
                     android.util.Log.d("🌾 MONITORING", "✅ Repository insert SUCCESS: id=${savedRecord.id}")
-                    currentCropId?.let { cropId ->
-                        android.util.Log.d("🌾 MONITORING", "🔄 Reloading crop data for $cropId")
-                        loadRelatedData(cropId)
-                    }
+                    // Add to local state immediately (don't reload from server)
+                    val currentRecords = _uiState.value.monitoringRecords.toMutableList()
+                    currentRecords.add(0, savedRecord)
                     _uiState.value = _uiState.value.copy(
+                        monitoringRecords = currentRecords,
                         message = "Monitoring record added successfully"
                     )
                 }.onFailure { error ->
@@ -279,20 +278,16 @@ class CropDetailsViewModel @Inject constructor(
     fun addTask(task: TaskEntity) {
         viewModelScope.launch {
             try {
-                // Call actual TaskRepository -> ApiService -> POST /tasks
-                val result = taskRepository.addTask(task.id,task)
+                // Save locally FIRST
+                taskRepository.addTask(task.id, task)
 
-                result.onSuccess {
-                    // Reload data after successful add
-                    currentCropId?.let { loadRelatedData(it) }
-                    _uiState.value = _uiState.value.copy(
-                        message = "Task added successfully"
-                    )
-                }.onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        error = error.message ?: "Failed to add task"
-                    )
-                }
+                // Add to local state immediately (don't reload from server)
+                val currentTasks = _uiState.value.tasks.toMutableList()
+                currentTasks.add(0, task)
+                _uiState.value = _uiState.value.copy(
+                    tasks = currentTasks,
+                    message = "Task added successfully"
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "Failed to add task"

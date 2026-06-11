@@ -834,15 +834,17 @@ private fun InfoRow(  icon: ImageVector, label: String,  value: String) {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun CreateTaskDialog(
     onDismiss: () -> Unit,
     onConfirm: (title: String, description: String, dueDate: String, priority: TaskPriority) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var dueDate by remember { mutableStateOf("") }
     var selectedPriority by remember { mutableStateOf(TaskPriority.MEDIUM) }
-    var expanded by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -863,13 +865,14 @@ private fun CreateTaskDialog(
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = dueDate,
-                    onValueChange = { dueDate = it },
-                    label = { Text("Due date (yyyy-MM-dd)") },
-                    singleLine = true,
+                OutlinedButton(
+                    onClick = { showDatePicker = true },
                     modifier = Modifier.fillMaxWidth()
-                )
+                ) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (selectedDateMillis != null) dateFormat.format(Date(selectedDateMillis!!)) else "Select due date")
+                }
                 Text("Priority: ${selectedPriority.name}", style = MaterialTheme.typography.labelMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TaskPriority.entries.forEach { priority ->
@@ -885,11 +888,11 @@ private fun CreateTaskDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (title.isNotBlank() && dueDate.isNotBlank()) {
-                        onConfirm(title, description, dueDate, selectedPriority)
+                    if (title.isNotBlank() && selectedDateMillis != null) {
+                        onConfirm(title, description, dateFormat.format(Date(selectedDateMillis!!)), selectedPriority)
                     }
                 },
-                enabled = title.isNotBlank() && dueDate.isNotBlank()
+                enabled = title.isNotBlank() && selectedDateMillis != null
             ) {
                 Text("Create")
             }
@@ -900,6 +903,26 @@ private fun CreateTaskDialog(
             }
         }
     )
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDateMillis ?: System.currentTimeMillis()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedDateMillis = it }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 }
 
 // Data classes

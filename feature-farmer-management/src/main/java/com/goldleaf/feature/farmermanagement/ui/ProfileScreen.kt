@@ -199,7 +199,7 @@ fun ProfileScreen(
                         
                         // Auto-fill location if GPS result is available
                         LaunchedEffect(uiState.gpsLocationRaw) {
-                            if (uiState.gpsLocationRaw.isNotBlank() && location.isBlank()) {
+                            if (uiState.gpsLocationRaw.isNotBlank()) {
                                 location = uiState.gpsLocationRaw
                             }
                         }

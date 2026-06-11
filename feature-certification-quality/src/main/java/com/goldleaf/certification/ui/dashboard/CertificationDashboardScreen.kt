@@ -41,7 +41,6 @@ fun CertificationDashboardScreen(
     val ui by viewModel.ui.collectAsStateWithLifecycle()
 
     var showCreateDialog by remember { mutableStateOf(false) }
-    var showLocationErrorDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -122,35 +121,13 @@ fun CertificationDashboardScreen(
                                     )
                                 },
                                 onRequestLabels = {
-                                    Log.d("CertificationDashboard", "🔘 Request Labels button CLICKED for batch ${batch.batchNumber}")
-                                    Log.d("CertificationDashboard", "👤 ui.farmer = ${ui.farmer?.let { "Name=${it.name}, Id=${it.id}" } ?: "NULL"}")
-                                    Log.d("CertificationDashboard", "📍 ui.farmer?.location = '${ui.farmer?.location}'")
-                                    
-                                    ui.farmer?.location?.let { location ->
-                                        Log.d("CertificationDashboard", "✅ Location exists: '$location'")
-                                        val parts = location.split(",")
-                                        Log.d("CertificationDashboard", "✂️ Location split by comma: $parts (${parts.size} parts)")
-                                        
-                                        val county = parts.firstOrNull()?.trim()
-                                        Log.d("CertificationDashboard", "🏛️ Extracted county: '$county'")
-                                        
-                                        county?.let {
-                                            Log.d("CertificationDashboard", "📤 Calling requestLabelsFromOfficer with county='$county'")
-                                            viewModel.requestLabelsFromOfficer(
-                                                batchId = batch.batchNumber,
-                                                qty = batch.quantity,
-                                                unit = batch.unit,
-                                                county = county
-                                            )
-                                        } ?: run {
-                                            Log.w("CertificationDashboard", "❌ County is null/empty after extraction")
-                                        }
-                                    } ?: run {
-                                        Log.w("CertificationDashboard", "❌ Farmer location is NULL - cannot extract county")
-                                        showLocationErrorDialog = true
-                                    }
-                                },
-                                isLocationSet = !ui.farmer?.location.isNullOrBlank()
+                                    viewModel.requestLabelsFromOfficer(
+                                        batchId = batch.batchNumber,
+                                        qty = batch.quantity,
+                                        unit = batch.unit,
+                                        county = "Kenya"
+                                    )
+                                }
                             )
                         }
                     }
@@ -192,18 +169,6 @@ fun CertificationDashboardScreen(
             onDismiss = { showCreateDialog = false }
         )
     }
-
-    if (showLocationErrorDialog) {
-        LocationErrorDialog(
-            onDismiss = { showLocationErrorDialog = false },
-            onNavigateToProfile = ui.farmer?.id?.let { farmerId ->
-                {
-                    navController.navigate("farmer_profile/$farmerId")
-                    showLocationErrorDialog = false
-                }
-            }
-        )
-    }
 }
 
 @Composable
@@ -212,7 +177,8 @@ fun BatchCard(
     onClick: () -> Unit,
     onPrintLabels: () -> Unit,
     onRequestLabels: () -> Unit,
-    isLocationSet: Boolean = true
+    isLocationSet: Boolean = true,
+    officerPhone: String? = null
 ) {
     Card(
         modifier = Modifier
@@ -245,22 +211,12 @@ fun BatchCard(
                 Button(
                     onClick = onRequestLabels,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                    enabled = isLocationSet
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                 ) {
                     Icon(Icons.Default.LocalShipping, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Request")
                 }
-            }
-            
-            if (!isLocationSet) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "⚠️ Please update your location in your profile to request labels",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
             }
         }
     }
@@ -281,38 +237,6 @@ fun BatchStatusChip(status: String?) {
             style = MaterialTheme.typography.labelSmall
         )
     }
-}
-
-@Composable
-fun LocationErrorDialog(onDismiss: () -> Unit, onNavigateToProfile: (() -> Unit)? = null) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Location Required") },
-        text = {
-            Text(
-                "Your location is not set. You must update your profile with your county/location before requesting certification labels from the officer.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        confirmButton = {
-            Button(onClick = onDismiss) {
-                Text("OK")
-            }
-        },
-        dismissButton = {
-            if (onNavigateToProfile != null) {
-                Button(
-                    onClick = {
-                        onNavigateToProfile()
-                        onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                ) {
-                    Text("Update Profile")
-                }
-            }
-        }
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

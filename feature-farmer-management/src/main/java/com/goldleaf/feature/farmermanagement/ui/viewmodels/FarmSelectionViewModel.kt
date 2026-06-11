@@ -8,6 +8,7 @@ import com.goldleaf.core.auth.UserSessionManager
 import com.goldleaf.core.data.dto.farm.Farm
 import com.goldleaf.core.data.dto.farm.FarmerDashboardData
 import com.goldleaf.core.data.local.FarmerEntity
+import com.goldleaf.core.data.local.dao.CropDao
 import com.goldleaf.feature.farmermanagement.domain.repository.FarmerRepository
 import com.goldleaf.feature.farmermanagement.ui.dashboard.DashboardFarmer
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +25,8 @@ data class ListFarmer(
 @HiltViewModel
 class FarmSelectionViewModel @Inject constructor(
     private val farmerRepository: FarmerRepository,
-    private val userSession: UserSessionManager
+    private val userSession: UserSessionManager,
+    private val cropDao: CropDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FarmSelectionUiState())
@@ -35,7 +37,6 @@ class FarmSelectionViewModel @Inject constructor(
         userSession.currentFarmer,
         userSession.userRole
     ) { entity, _ ->
-        // If entity is null, the whole thing is null
         entity?.let {
             ListFarmer(
                 id = it.id,
@@ -50,18 +51,30 @@ class FarmSelectionViewModel @Inject constructor(
 
 
     init {
-        // 2. Automatically trigger load when the ID becomes available
         viewModelScope.launch {
             currentFarmer.collect { farmer ->
                 if (farmer != null) {
                     if (!farmer.id.isNullOrBlank()) {
                         loadFarms(farmer.id)
+                        loadRecentActivities()
                     }
                 }
             }
         }
     }
 
+    private fun loadRecentActivities() {
+        viewModelScope.launch {
+            try {
+                val farmerId = currentFarmer.value?.id ?: return@launch
+                val activities = cropDao.getActivitiesByFarmerId(farmerId).first()
+                    .map { it.description }
+                _uiState.update { it.copy(recentActivities = activities) }
+            } catch (e: Exception) {
+                Log.w("FarmSelectionVM", "Failed to load recent activities", e)
+            }
+        }
+    }
 
     fun loadFarms(farmerId: String) {
         if (farmerId.isBlank()) {
@@ -126,5 +139,6 @@ data class FarmSelectionUiState(
     val farms: List<Farm> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val recentActivities: List<String> = emptyList()
 )

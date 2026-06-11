@@ -26,7 +26,6 @@ import com.goldleaf.feature.farmermanagement.ui.FarmSetupScreen
 import com.goldleaf.feature.farmermanagement.ui.screens.FarmFencingScreen
 import com.goldleaf.feature.farmermanagement.ui.screens.FarmerManagementScreen
 import com.goldleaf.feature.cropmanagement.ui.selection.CropSelectionScreen
-import com.goldleaf.feature.cropmanagement.ui.monitoring.CropMonitoringScreen
 import com.goldleaf.feature.cropmanagement.ui.details.CropDetailsScreen
 import com.goldleaf.feature.weatherclimate.ui.WeatherScreen
 import com.goldleaf.feature.advisoryservices.ui.AdvisoryDashboardScreen
@@ -68,7 +67,6 @@ object Routes {
     const val FARM_SELECTION = "farm_selection/{farmerId}"
     const val FARM_FENCING = "farm_fencing/{farmId}"
     const val CROP_SELECTION = "crop_selection/{farmId}"
-    const val CROP_MONITORING = "crop_monitoring"
     const val WEATHER = "weather"
     const val ADVISORY_DASHBOARD = "advisory_dashboard"
     const val PEST_DETECTION = "pest_detection"
@@ -255,17 +253,6 @@ fun AppNavigation(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-
-        composable(Routes.CROP_MONITORING) {
-            CropMonitoringScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToCropDetails = { cropId ->
-                    navController.navigate(Routes.cropDetails(cropId))
-                }
-           )
-        }
-
-
 
         // Inside your NavHost
         composable(

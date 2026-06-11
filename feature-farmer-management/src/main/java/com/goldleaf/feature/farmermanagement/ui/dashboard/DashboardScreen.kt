@@ -196,9 +196,11 @@ fun DashboardContent(
 
                 item {
                     StatsOverview(
-                        totalFarms = uiState.totalFarms,
+                        totalPlots = uiState.totalPlots,
                         activeCrops = uiState.activeCrops,
-                        pendingTasks = uiState.pendingTasks
+                        pendingTasks = uiState.pendingTasks,
+                        farmId = farmId,
+                        navController = navController
                     )
                 }
 
@@ -209,14 +211,6 @@ fun DashboardContent(
                         farmId = farmId,
                         farmerId = farmerId
                     )
-                }
-
-                item {
-                    Text("Recent Activity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-
-                items(uiState.recentActivities) { activity ->
-                    ActivityCard(activity = activity)
                 }
 
                 item {
@@ -297,34 +291,39 @@ private fun GreetingCard(
 
 @Composable
 private fun StatsOverview(
-    totalFarms: Int,
+    totalPlots: Int,
     activeCrops: Int,
-    pendingTasks: Int
+    pendingTasks: Int,
+    farmId: String?,
+    navController: NavController
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         StatCard(
-            icon = Icons.Default.Agriculture,
-            value = totalFarms.toString(),
-            label = "Farms",
+            icon = Icons.Default.Grid3x3,
+            value = totalPlots.toString(),
+            label = "Plots",
             color = Color(0xFF4CAF50),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            onClick = { farmId?.let { navController.navigate("farm_plots/$it") } }
         )
         StatCard(
             icon = Icons.Default.Spa,
             value = activeCrops.toString(),
             label = "Crops",
             color = Color(0xFF2196F3),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            onClick = { farmId?.let { navController.navigate("my_crops/$it") } }
         )
         StatCard(
             icon = Icons.Default.TaskAlt,
             value = pendingTasks.toString(),
             label = "Tasks",
             color = Color(0xFFFF9800),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            onClick = { farmId?.let { navController.navigate("my_crops/$it") } }
         )
     }
 }
@@ -335,9 +334,11 @@ private fun StatCard(
     value: String,
     label: String,
     color: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
@@ -681,12 +682,14 @@ private fun BottomNavigationBar(
                 }
             )
             NavigationBarItem(
-                icon = { Icon(Icons.Default.Agriculture, "Farms") },
-                label = { Text("Farms") },
-                selected = currentRoute(navController) == "crop_monitoring",
+                icon = { Icon(Icons.Default.MonetizationOn, "Revenue") },
+                label = { Text("Revenue") },
+                selected = currentRoute(navController) == "revenue",
                 onClick = {
-                    navController.navigate("crop_monitoring") {
-                        launchSingleTop = true
+                    if (farmerId != null) {
+                        navController.navigate("revenue/$farmerId") {
+                            launchSingleTop = true
+                        }
                     }
                 }
             )

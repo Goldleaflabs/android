@@ -58,6 +58,12 @@ interface CropDao {
     @Query("SELECT * FROM crop_activities WHERE cropId IN (:cropIds) ORDER BY date DESC")
     suspend fun getActivitiesForMultipleCrops(cropIds: List<String>): List<CropActivity>
 
+    @Query("SELECT * FROM crop_activities ORDER BY date DESC")
+    fun getAllActivities(): Flow<List<CropActivity>>
+
+    @Query("SELECT a.* FROM crop_activities a INNER JOIN crops c ON a.cropId = c.id WHERE c.farmerId = :farmerId ORDER BY a.createdAt DESC")
+    fun getActivitiesByFarmerId(farmerId: String): Flow<List<CropActivity>>
+
     @Query("SELECT * FROM crop_activities WHERE id = :activityId")
     suspend fun getActivityById(activityId: String): CropActivity?
 

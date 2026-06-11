@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.goldleaf.certification.navigation.CertificationRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,10 +60,9 @@ fun QualityDashboardScreen(navController: NavHostController) {
             item {
                 QualityNavigationCard(
                     title = "Lab Test Records",
-                    subtitle = "View Admin-verified lab results and certificates",
+                    subtitle = "View lab results for your batches. Available when viewing batch details.",
                     icon = Icons.Default.Science,
-                    // Navigates to the main batch list to select a batch for lab viewing
-                    onClick = { navController.navigate(CertificationRoutes.CertificationDashboard.route) }
+                    onClick = { }
                 )
             }
 
