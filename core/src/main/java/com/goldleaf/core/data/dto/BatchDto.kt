@@ -63,7 +63,8 @@ data class LabTestDto(
     val isPassed: Boolean?,
     val resultUrl: String?,
     val notes: String?,
-    val certificationNumber: String?
+    val certificationNumber: String?,
+    val results: String? = null
 )
 
 data class BlockchainRecordDto(

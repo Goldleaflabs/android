@@ -12,8 +12,10 @@ import com.goldleaf.core.data.local.dao.CropDao
 import com.goldleaf.feature.farmermanagement.domain.repository.FarmerRepository
 import com.goldleaf.feature.farmermanagement.ui.dashboard.DashboardFarmer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 // Define it here so it's scoped only to this screen
@@ -55,6 +57,11 @@ class FarmSelectionViewModel @Inject constructor(
             currentFarmer.collect { farmer ->
                 if (farmer != null) {
                     if (!farmer.id.isNullOrBlank()) {
+                        // Sync all data from server before reading local
+                        withContext(Dispatchers.IO) {
+                            try { farmerRepository.syncAllFromServer(farmer.id) } catch (_: Exception) { }
+                            try { farmerRepository.syncFarmerData() } catch (_: Exception) { }
+                        }
                         loadFarms(farmer.id)
                         loadRecentActivities()
                     }
@@ -129,6 +136,9 @@ class FarmSelectionViewModel @Inject constructor(
         Log.d("FarmSelectionViewModel", "🔄 refreshFarms: Starting refresh for farmerId='$farmerId'")
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
+            withContext(Dispatchers.IO) {
+                try { farmerRepository.syncAllFromServer(farmerId) } catch (_: Exception) { }
+            }
             loadFarms(farmerId)
             _uiState.update { it.copy(isRefreshing = false) }
         }

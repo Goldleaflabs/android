@@ -2,6 +2,8 @@ package com.goldleaf.certification.di
 
 
 import com.goldleaf.core.auth.UserSessionManager
+import com.goldleaf.core.data.local.AppDatabase
+import com.goldleaf.core.data.local.dao.LabTestDao
 import com.goldleaf.core.data.local.dao.ProductBatchDao
 import com.goldleaf.certification.data.remote.CertificationApiService
 import com.goldleaf.certification.data.repository.BatchRepositoryImpl

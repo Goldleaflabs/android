@@ -13,6 +13,9 @@ interface LabTestDao {
     @Query("SELECT * FROM lab_tests WHERE batchId = :batchId ORDER BY testDate DESC")
     fun getTestsByBatch(batchId: String): Flow<List<LabTestEntity>>
 
+    @Query("SELECT * FROM lab_tests ORDER BY testDate DESC")
+    fun getAllTests(): Flow<List<LabTestEntity>>
+
     @Query("SELECT * FROM lab_tests WHERE id = :testId")
     suspend fun getTestById(testId: String): LabTestEntity?
 
