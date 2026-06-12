@@ -29,7 +29,8 @@ object FarmerManagementModule {
             farmDao = database.farmDao(),
             certificationDao = database.certificationDao(),  // ✅ Add this
             sessionManager = sessionManager , // ✅ Add this
-            cropDao = database.cropDao()
+            cropDao = database.cropDao(),
+            plotDao = database.plotDao()
         )
     }
 }

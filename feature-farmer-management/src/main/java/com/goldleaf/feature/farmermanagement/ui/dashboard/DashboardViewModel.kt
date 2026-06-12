@@ -80,6 +80,12 @@ class DashboardViewModel @Inject constructor(
         dashboardJob?.cancel()
 
         dashboardJob = viewModelScope.launch {
+            // Refresh from server before reading local
+            withContext(Dispatchers.IO) {
+                try { farmerRepository.syncAllFromServer(farmerId) } catch (_: Exception) { }
+                try { farmerRepository.syncFarmerData() } catch (_: Exception) { }
+            }
+
             farmerRepository.getFarmerFarms(farmerId)
                 .collectLatest { allFarms ->
                     if (allFarms.isEmpty()) {
@@ -162,9 +168,8 @@ class DashboardViewModel @Inject constructor(
             _uiState.update { it.copy(isRefreshing = true) }
 
             withContext(Dispatchers.IO) {
+                try { farmerRepository.syncAllFromServer(farmerId) } catch (_: Exception) { }
                 try { farmerRepository.syncFarmerData() } catch (_: Exception) { }
-                try { farmerRepository.getFarmCrops(selectedFarmId) } catch (_: Exception) { }
-                try { tasksRepository.getTasksByFarmId(selectedFarmId) } catch (_: Exception) { }
             }
 
             delay(500)

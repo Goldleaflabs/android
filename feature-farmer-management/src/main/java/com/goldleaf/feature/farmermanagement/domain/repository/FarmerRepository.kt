@@ -339,6 +339,11 @@ interface FarmerRepository {
 
     suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit>
 
+    /**
+     * Bulk sync all farmer data (crops, plots, tasks) from server
+     */
+    suspend fun syncAllFromServer(farmerId: String): Result<Unit>
+
 }
 
 // =====================================================

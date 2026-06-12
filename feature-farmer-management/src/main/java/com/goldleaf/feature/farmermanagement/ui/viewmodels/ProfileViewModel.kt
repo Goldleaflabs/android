@@ -49,10 +49,26 @@ class ProfileViewModel @Inject constructor(
     private fun loadProfileData() {
         viewModelScope.launch {
             try {
-                // Collect stream from Repository
                 farmerRepository.getCurrentFarmer(farmerId).collect { farmer ->
                     if (farmer != null) {
                         val farms = farmerRepository.getFarmerFarms(farmer.id).firstOrNull() ?: emptyList()
+
+                        // Resolve display location: from stored coordinates or text fields
+                        val address = farmer.contactInfo.address
+                        var displayLocation = ""
+                        var storedLat = address?.latitude
+                        var storedLng = address?.longitude
+
+                        if (storedLat != null && storedLng != null) {
+                            val resolved = withContext(Dispatchers.IO) {
+                                try { geocodingRepository.getAddress(storedLat, storedLng) } catch (_: Exception) { null }
+                            }
+                            displayLocation = resolved?.county?.takeIf { it.isNotBlank() } ?: "Kenya"
+                        } else {
+                            // Fall back to text fields
+                            displayLocation = "${address?.district ?: ""}, ${address?.region ?: ""}"
+                                .trimStart(',').trimStart(' ').trimEnd(',').trimEnd(' ')
+                        }
 
                         _uiState.update { it.copy(
                             isLoading = false,
@@ -62,13 +78,15 @@ class ProfileViewModel @Inject constructor(
                                 email = farmer.contactInfo.email ?: "",
                                 phone = farmer.contactInfo.primaryPhone,
                                 profileImage = farmer.profileImageUrl,
-                                location = "${farmer.contactInfo.address?.district}, ${farmer.contactInfo.address?.region}",
+                                location = displayLocation,
                                 totalFarmSize = farmer.farmInfo.totalLandSize,
                                 memberSince = farmer.registrationDate.toString().substringBefore("T")
                             ),
                             totalFarms = farms.size,
                             activeCrops = farmer.totalCrops,
-                            primaryCrops = farmer.farmInfo.mainCrops
+                            primaryCrops = farmer.farmInfo.mainCrops,
+                            gpsLatitude = storedLat,
+                            gpsLongitude = storedLng
                         )}
                     } else {
                         _uiState.update { it.copy(isLoading = false, error = "Profile not found") }
@@ -91,13 +109,14 @@ class ProfileViewModel @Inject constructor(
 
             _uiState.update { it.copy(isUpdating = true, error = null, successMessage = null) }
 
-            // Location Logic from your snippet
             val parts = location.split(",").map { it.trim() }
             val district = parts.getOrNull(0) ?: ""
             val region = parts.getOrNull(1) ?: ""
+            val lat = _uiState.value.gpsLatitude
+            val lng = _uiState.value.gpsLongitude
 
             try {
-                val updateDto = FarmerUpdateDto(name, email, currentPhone, district, region)
+                val updateDto = FarmerUpdateDto(name, email, currentPhone, district, region, lat, lng)
                 val farmerIdToUpdate = _uiState.value.farmer?.id ?: farmerId
                 val result = farmerRepository.updateFarmerProfile(farmerIdToUpdate, updateDto)
 
@@ -147,7 +166,6 @@ class ProfileViewModel @Inject constructor(
                 if (location != null) {
                     // Get readable address using reverse geocoding
                     val address = geocodingRepository.getAddress(location.latitude, location.longitude)
-                    // Use most specific available fields for location
                     val district = address.subCounty.takeIf { it.isNotBlank() } ?: address.ward.takeIf { it.isNotBlank() } ?: address.village.takeIf { it.isNotBlank() } ?: "Unknown District"
                     val region = address.county.takeIf { it.isNotBlank() } ?: address.fullAddress.takeIf { it.isNotBlank() } ?: "Unknown Region"
                     val formattedLocation = "$district, $region"
@@ -155,7 +173,9 @@ class ProfileViewModel @Inject constructor(
                         isLoadingLocation = false,
                         locationError = null,
                         gpsLocationRaw = formattedLocation,
-                        gpsFormattedAddress = address
+                        gpsFormattedAddress = address,
+                        gpsLatitude = location.latitude,
+                        gpsLongitude = location.longitude
                     )}
                 } else {
                     _uiState.update { it.copy(
@@ -200,5 +220,7 @@ data class ProfileUiState(
     val isLoadingLocation: Boolean = false,
     val locationError: String? = null,
     val gpsLocationRaw: String = "",
-    val gpsFormattedAddress: AddressData? = null
+    val gpsFormattedAddress: AddressData? = null,
+    val gpsLatitude: Double? = null,
+    val gpsLongitude: Double? = null
 )

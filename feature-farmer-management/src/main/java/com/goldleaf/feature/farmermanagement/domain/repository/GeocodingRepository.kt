@@ -43,18 +43,18 @@ class GeocodingRepository @Inject constructor() {
                 ?: address?.optString("suburb").takeIf { !it.isNullOrBlank() }
                 ?: address?.optString("city_district").takeIf { !it.isNullOrBlank() }
                 ?: address?.optString("municipality").takeIf { !it.isNullOrBlank() }
-                ?: "Sub-County Unknown"
+                ?: ""
             Log.d("GeocodingDebug", "SubCounty result: $subCounty")
 
             val ward = address?.optString("locality").takeIf { !it.isNullOrBlank() }
                 ?: address?.optString("town").takeIf { !it.isNullOrBlank() }
                 ?: address?.optString("suburb").takeIf { !it.isNullOrBlank() }
-                ?: "Ward Unknown"
+                ?: ""
 
             val village = address?.optString("village").takeIf { !it.isNullOrBlank() }
                 ?: address?.optString("hamlet").takeIf { !it.isNullOrBlank() }
                 ?: address?.optString("neighbourhood").takeIf { !it.isNullOrBlank() }
-                ?: "Village Unknown"
+                ?: ""
 
             val fullAddress = json.optString("display_name").takeIf { !it.isNullOrBlank() }
                 ?: "Lat: $lat, Lon: $lng"
@@ -69,7 +69,7 @@ class GeocodingRepository @Inject constructor() {
             )
         } catch (e: Exception) {
             Log.e("GeocodingDebug", "Error getting address", e)
-            AddressData("Kenya", "Unknown", "Unknown", "Unknown", "Lat: $lat, Lon: $lng")
+            AddressData(county = "Kenya", subCounty = "", ward = "", village = "", fullAddress = "Lat: $lat, Lon: $lng")
         }
     }
 

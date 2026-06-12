@@ -15,7 +15,9 @@ data class FarmerUpdateDto(
     val email: String,
     val phone: String,
     val district: String,
-    val region: String
+    val region: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
 
 

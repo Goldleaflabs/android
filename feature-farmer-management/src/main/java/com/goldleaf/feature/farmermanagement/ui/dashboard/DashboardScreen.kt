@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Grid3x3
 import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -53,7 +52,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -274,13 +272,13 @@ private fun GreetingCard(
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    text = if (role == UserRole.VERIFIEDFARMER) "VERIFIED FARMER Access" else "Ready to grow today?",
+                    text = "Ready to grow today?",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f)
                 )
             }
             Icon(
-                if (role == UserRole.VERIFIEDFARMER) Icons.Default.Verified else Icons.Default.Agriculture,
+                Icons.Default.Agriculture,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
                 modifier = Modifier.size(48.dp)
@@ -323,7 +321,7 @@ private fun StatsOverview(
             label = "Tasks",
             color = Color(0xFFFF9800),
             modifier = Modifier.weight(1f),
-            onClick = { farmId?.let { navController.navigate("my_crops/$it") } }
+            onClick = { farmId?.let { navController.navigate("tasks/$it") } }
         )
     }
 }
@@ -375,69 +373,30 @@ private fun QuickActionsSection(
     farmId: String?,
     farmerId: String?
 ) {
-    val showVerificationDialog = remember { mutableStateOf(false) }
-
-    if (showVerificationDialog.value) {
-        AlertDialog(
-            onDismissRequest = { showVerificationDialog.value = false },
-            title = { Text("Verification Required") },
-            text = { Text("This feature is only available to verified farmers.") },
-            confirmButton = {
-                TextButton(onClick = { showVerificationDialog.value = false }) {
-                    Text("OK")
-                }
-            }
-        )
-    }
-
     Column {
         Text("Services & Actions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
 
-        // Row 1: Primary Management
+        // 6 rows x 2 columns
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickActionCard(
-                icon = Icons.Default.Add,
-                title = "Add Farm",
-                onClick = { navController.navigate("farm_setup") },
-                modifier = Modifier.weight(1f)
-            )
             QuickActionCard(
                 icon = Icons.Default.Spa,
                 title = "Add Crop",
                 onClick = {
-                    // Use a fallback to prevent navigating to an invalid empty path
                     val id = if (farmId.isNullOrBlank()) "unknown" else farmId
                     navController.navigate("crop_selection/$id")
                 },
                 modifier = Modifier.weight(1f)
             )
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        // Row 2: Monitoring & Records
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
                 icon = Icons.Default.Agriculture,
                 title = "My Crops",
                 onClick = { navController.navigate("my_crops/$farmId") },
                 modifier = Modifier.weight(1f)
             )
-            QuickActionCard(
-                icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                title = "Crop Monitoring",
-                onClick = {
-                    // Bridge to activity logging via the monitoring list
-                    navController.navigate("crop_monitoring")
-                },
-                modifier = Modifier.weight(1f)
-            )
         }
-
         Spacer(Modifier.height(12.dp))
 
-        // Row 3: Compliance
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
                 icon = Icons.Default.Verified,
@@ -452,41 +411,27 @@ private fun QuickActionsSection(
                 modifier = Modifier.weight(1f)
             )
         }
-
         Spacer(Modifier.height(12.dp))
 
-        // Row 4: Verified Services
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
                 icon = Icons.Default.Fence,
                 title = "Farm Fencing",
                 onClick = {
-                    if (userRole != UserRole.VERIFIEDFARMER) {
-                        showVerificationDialog.value = true
-                    } else {
-                        val id = if (farmId.isNullOrBlank()) "unknown" else farmId
-                        navController.navigate("farm_fencing/$id")
-                    }
+                    val id = if (farmId.isNullOrBlank()) "unknown" else farmId
+                    navController.navigate("farm_fencing/$id")
                 },
                 modifier = Modifier.weight(1f)
             )
             QuickActionCard(
                 icon = Icons.Default.PestControl,
                 title = "Pest/Disease",
-                onClick = {
-                    if (userRole != UserRole.VERIFIEDFARMER) {
-                        showVerificationDialog.value = true
-                    } else {
-                        navController.navigate("pest_detection")
-                    }
-                },
+                onClick = { navController.navigate("pest_detection") },
                 modifier = Modifier.weight(1f)
             )
         }
-
         Spacer(Modifier.height(12.dp))
 
-        // Row 5: Training & Seasonal Plan
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
                 icon = Icons.Default.School,
@@ -501,10 +446,8 @@ private fun QuickActionsSection(
                 modifier = Modifier.weight(1f)
             )
         }
-
         Spacer(Modifier.height(12.dp))
 
-        // Row 6: Compliance & Soil Profile
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
                 icon = Icons.Default.Checklist,
@@ -519,28 +462,13 @@ private fun QuickActionsSection(
                 modifier = Modifier.weight(1f)
             )
         }
-
         Spacer(Modifier.height(12.dp))
 
-        // Row 7: Farm Plots
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionCard(
                 icon = Icons.Default.Grid3x3,
                 title = "Farm Plots",
                 onClick = { navController.navigate("farm_plots/$farmId") },
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.weight(1f))
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        // Row 8: Revenue
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickActionCard(
-                icon = Icons.Default.MonetizationOn,
-                title = "My Revenue",
-                onClick = { farmerId?.let { navController.navigate("revenue/$it") } },
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.weight(1f))

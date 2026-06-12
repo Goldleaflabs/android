@@ -51,6 +51,7 @@ import com.goldleaf.certification.navigation.qualityNavGraph
 import com.goldleaf.certification.navigation.productAuthNavGraph
 import com.goldleaf.feature.farmermanagement.ui.screens.FarmSelectionScreen
 import com.goldleaf.feature.farmermanagement.ui.screens.MyCropsScreen
+import com.goldleaf.feature.farmermanagement.ui.screens.TasksListScreen
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -81,6 +82,7 @@ object Routes {
     const val SOIL_PROFILE = "soil_profile/{farmId}"
     const val PLOT_MANAGEMENT = "farm_plots/{farmId}"
     const val REVENUE = "revenue/{farmerId}"
+    const val TASKS = "tasks/{farmId}"
 
 
    // Helper functions
@@ -106,6 +108,7 @@ object Routes {
     fun soilProfile(farmId: String) = "soil_profile/$farmId"
     fun plotManagement(farmId: String) = "farm_plots/$farmId"
     fun revenue(farmerId: String) = "revenue/$farmerId"
+    fun tasks(farmId: String) = "tasks/$farmId"
 
 }
 
@@ -373,6 +376,17 @@ fun AppNavigation(
             val farmerId = backStackEntry.arguments?.getString("farmerId") ?: return@composable
             RevenueScreen(
                 farmerId = farmerId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.TASKS,
+            arguments = listOf(navArgument("farmId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val farmId = backStackEntry.arguments?.getString("farmId") ?: return@composable
+            TasksListScreen(
+                farmId = farmId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

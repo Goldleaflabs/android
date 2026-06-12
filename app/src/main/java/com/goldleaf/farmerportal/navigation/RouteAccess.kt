@@ -59,21 +59,21 @@ object AppRoutes {
     // VERIFIEDFARMER-Only Routes
     val CERTIFICATION = RouteAccess(
         route = "certification_graph",
-        allowedRoles = listOf(UserRole.VERIFIEDFARMER),
+        allowedRoles = listOf(UserRole.FARMER, UserRole.VERIFIEDFARMER),
         label = "Certification",
         isBottomNavItem = true
     )
 
     val QUALITY = RouteAccess(
         route = "quality_graph",
-        allowedRoles = listOf(UserRole.VERIFIEDFARMER),
+        allowedRoles = listOf(UserRole.FARMER, UserRole.VERIFIEDFARMER),
         label = "Quality",
         isBottomNavItem = false
     )
 
     val VERIFICATION = RouteAccess(
         route = "product_auth_graph",
-        allowedRoles = listOf(UserRole.VERIFIEDFARMER),
+        allowedRoles = listOf(UserRole.FARMER, UserRole.VERIFIEDFARMER),
         label = "Verify Products",
         isBottomNavItem = false
     )

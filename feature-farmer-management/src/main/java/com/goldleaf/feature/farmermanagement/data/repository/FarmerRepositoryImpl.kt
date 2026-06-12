@@ -26,10 +26,12 @@ import com.goldleaf.core.data.dto.farm.toDomain
 import com.goldleaf.core.data.local.CropEntity
 import com.goldleaf.core.data.local.CropStatus
 import com.goldleaf.core.data.local.FarmEntity
+import com.goldleaf.core.data.local.PlotEntity
 import com.goldleaf.core.data.local.dao.CertificationDao
 import com.goldleaf.core.data.local.dao.CropDao
 import com.goldleaf.core.data.local.dao.FarmDao
 import com.goldleaf.core.data.local.dao.FarmerDao
+import com.goldleaf.core.data.local.dao.PlotDao
 import com.goldleaf.core.data.local.dao.toDomain
 import com.goldleaf.core.util.Result
 import com.goldleaf.feature.farmermanagement.data.mapper.toDomainModel
@@ -54,6 +56,7 @@ class FarmerRepositoryImpl @Inject constructor(
     private val farmDao: FarmDao,
     private val cropDao: CropDao,
     private val certificationDao: CertificationDao,
+    private val plotDao: PlotDao,
     private val sessionManager: UserSessionManager
 ) : FarmerRepository {
 
@@ -518,6 +521,26 @@ class FarmerRepositoryImpl @Inject constructor(
         val lastSync = farmerDao.getLastSyncTime()
         val now = System.currentTimeMillis()
         return (now - lastSync!!) > (60 * 60 * 1000) // 1 hour
+    }
+
+    override suspend fun syncAllFromServer(farmerId: String): Result<Unit> {
+        return try {
+            val lastSync = farmerDao.getLastSyncTime() ?: 0L
+            val response = apiService.syncDownload(farmerId, lastSync)
+
+            if (response.isSuccessful && response.body() != null) {
+                val data = response.body()!!
+
+                data.plots?.let { plotDao.insertPlots(it) }
+                data.crops?.let { cropDao.insertallCrop(it) }
+
+                Result.Success(Unit)
+            } else {
+                Result.Error("Bulk sync failed: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Result.Error("Bulk sync failed: ${e.localizedMessage}")
+        }
     }
 
     // Implement remaining methods similarly...

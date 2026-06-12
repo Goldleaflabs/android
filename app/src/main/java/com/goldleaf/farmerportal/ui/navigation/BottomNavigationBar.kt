@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
@@ -32,16 +31,11 @@ fun BottomNavigationBar(
     navController: NavController,
     userSession: UserSessionManager
 ) {
-    val userRole by userSession.userRole.collectAsState(initial = UserRole.FARMER)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Get items based on user role
-    val items = when (userRole) {
-        UserRole.FARMER -> AppRoutes.getBottomNavItemsForRole(UserRole.FARMER)
-        UserRole.VERIFIEDFARMER -> AppRoutes.getBottomNavItemsForRole(UserRole.VERIFIEDFARMER)
-        else -> emptyList()
-    }
+    // Get items for all farmer roles
+    val items = AppRoutes.getBottomNavItemsForRole(UserRole.FARMER)
 
     if (items.isEmpty()) return
 
