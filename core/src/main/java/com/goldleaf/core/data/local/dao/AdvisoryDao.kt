@@ -17,6 +17,9 @@ interface AdvisoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAdvisory(advisory: AdvisoryEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAdvisories(advisories: List<AdvisoryEntity>)
+
     @Delete
     suspend fun deleteAdvisory(advisory: AdvisoryEntity)
 }

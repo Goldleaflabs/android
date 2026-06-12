@@ -1,15 +1,25 @@
 package com.goldleaf.feature.cropmanagement.ui.compliance
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.goldleaf.core.data.api.ApiService
 import com.goldleaf.core.data.local.ComplianceChecklistEntity
 import com.goldleaf.core.data.local.dao.ComplianceChecklistDao
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.io.FileOutputStream
 import java.util.UUID
 import javax.inject.Inject
 
@@ -18,13 +28,15 @@ data class ComplianceUiState(
     val categories: List<String> = emptyList(),
     val selectedCategory: String = "ALL",
     val isLoading: Boolean = true,
-    val syncMessage: String? = null
+    val syncMessage: String? = null,
+    val captureItemId: String? = null
 )
 
 @HiltViewModel
 class ComplianceTrackingViewModel @Inject constructor(
     private val dao: ComplianceChecklistDao,
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ComplianceUiState())
@@ -90,14 +102,17 @@ class ComplianceTrackingViewModel @Inject constructor(
         }
     }
 
-    fun updateEvidence(item: ComplianceChecklistEntity, evidenceUrl: String) {
+    fun captureEvidence(item: ComplianceChecklistEntity, photoUri: Uri) {
         viewModelScope.launch {
+            val localPath = savePhotoToLocalStorage(photoUri, item.id)
+            if (localPath == null) return@launch
+
             val updated = item.copy(
-                evidenceUrl = evidenceUrl,
+                evidenceLocalPath = localPath,
                 updatedAt = System.currentTimeMillis()
             )
             dao.updateItem(updated)
-            syncToServer(listOf(updated))
+            uploadPhotoToServer(updated, localPath)
         }
     }
 
@@ -115,6 +130,45 @@ class ComplianceTrackingViewModel @Inject constructor(
     fun deleteItem(item: ComplianceChecklistEntity) {
         viewModelScope.launch {
             dao.deleteItem(item)
+        }
+    }
+
+    private suspend fun savePhotoToLocalStorage(photoUri: Uri, itemId: String): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val dir = File(context.filesDir, "compliance_evidence")
+                if (!dir.exists()) dir.mkdirs()
+                val dest = File(dir, "${itemId}.jpg")
+                context.contentResolver.openInputStream(photoUri)?.use { input ->
+                    FileOutputStream(dest).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                dest.absolutePath
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    private suspend fun uploadPhotoToServer(item: ComplianceChecklistEntity, localPath: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val file = File(localPath)
+                if (!file.exists()) return@withContext
+
+                val requestBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                val part = MultipartBody.Part.createFormData("photo", file.name, requestBody)
+                val response = apiService.uploadCompliancePhoto(item.id, part)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val url = response.body()!!.evidenceUrl
+                    val updated = item.copy(evidenceUrl = url)
+                    withContext(Dispatchers.Main) {
+                        dao.updateItem(updated)
+                    }
+                }
+            } catch (_: Exception) {}
         }
     }
 

@@ -1,5 +1,10 @@
 package com.goldleaf.feature.cropmanagement.ui.compliance
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,17 +17,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.rememberAsyncImagePainter
 import com.goldleaf.core.data.local.ComplianceChecklistEntity
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-private val dateFmt = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +40,9 @@ fun ComplianceTrackingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(farmId) { viewModel.loadItems(farmId) }
+    LaunchedEffect(farmId) {
+        viewModel.loadItems(farmId)
+    }
 
     Scaffold(
         topBar = {
@@ -42,7 +50,7 @@ fun ComplianceTrackingScreen(
                 title = { Text("Compliance Checklist") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -54,7 +62,7 @@ fun ComplianceTrackingScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add item")
+                Icon(Icons.Default.Add, "Add item")
             }
         }
     ) { paddingValues ->
@@ -85,7 +93,9 @@ fun ComplianceTrackingScreen(
                 ComplianceList(
                     items = uiState.items,
                     onStatusChange = { item, status -> viewModel.updateStatus(item, status) },
-                    onEvidenceChange = { item, url -> viewModel.updateEvidence(item, url) },
+                    onEvidenceCapture = { item, uri ->
+                        viewModel.captureEvidence(item, uri)
+                    },
                     onNotesChange = { item, notes -> viewModel.updateNotes(item, notes) },
                     onDelete = { viewModel.deleteItem(it) }
                 )
@@ -127,20 +137,43 @@ private fun CategoryFilterBar(categories: List<String>, selectedCategory: String
 private fun ComplianceList(
     items: List<ComplianceChecklistEntity>,
     onStatusChange: (ComplianceChecklistEntity, String) -> Unit,
-    onEvidenceChange: (ComplianceChecklistEntity, String) -> Unit,
+    onEvidenceCapture: (ComplianceChecklistEntity, Uri) -> Unit,
     onNotesChange: (ComplianceChecklistEntity, String) -> Unit,
     onDelete: (ComplianceChecklistEntity) -> Unit
 ) {
+    val context = LocalContext.current
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(items, key = { it.id }) { item ->
+            val photoLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.TakePicture()
+            ) { /* success — galleryLauncher will handle the file */ }
+            val galleryLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+                uri?.let { onEvidenceCapture(item, it) }
+            }
+            val photoFile = remember { File(item.evidenceLocalPath) }
+            val photoExists = item.evidenceLocalPath != null && photoFile.exists()
+
             ComplianceItemCard(
                 item = item,
+                photoExists = photoExists,
+                photoFile = if (photoExists) photoFile else null,
                 onStatusChange = { s -> onStatusChange(item, s) },
-                onEvidenceChange = { url -> onEvidenceChange(item, url) },
+                onCapturePhoto = {
+                    val dir = File(context.filesDir, "compliance_evidence")
+                    if (!dir.exists()) dir.mkdirs()
+                    val tmpFile = File(dir, "tmp_${item.id}.jpg")
+                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                        context, "${context.packageName}.fileprovider", tmpFile
+                    )
+                    photoLauncher.launch(uri)
+                },
+                onPickGallery = { galleryLauncher.launch("image/*") },
                 onNotesChange = { notes -> onNotesChange(item, notes) },
                 onDelete = { onDelete(item) }
             )
@@ -151,11 +184,15 @@ private fun ComplianceList(
 @Composable
 private fun ComplianceItemCard(
     item: ComplianceChecklistEntity,
+    photoExists: Boolean = false,
+    photoFile: File? = null,
     onStatusChange: (String) -> Unit,
-    onEvidenceChange: (String) -> Unit,
+    onCapturePhoto: () -> Unit,
+    onPickGallery: () -> Unit,
     onNotesChange: (String) -> Unit,
     onDelete: () -> Unit
 ) {
+    val context = LocalContext.current
     val statusColors = mapOf(
         "COMPLIANT" to Color(0xFF4CAF50),
         "NON_COMPLIANT" to Color(0xFFF44336),
@@ -180,7 +217,6 @@ private fun ComplianceItemCard(
     val color = statusColors[item.status] ?: Color.Gray
     val icon = statusIcons[item.status] ?: Icons.Default.Help
 
-    var showEvidenceDialog by remember { mutableStateOf(false) }
     var showNotesDialog by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
 
@@ -219,12 +255,25 @@ private fun ComplianceItemCard(
                     Spacer(Modifier.width(12.dp))
                     Icon(Icons.Default.DateRange, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.width(2.dp))
-                    Text(dateFmt.format(Date(item.dueDate!!)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(item.dueDate!!)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
+            // Photo preview
+            if (photoExists && photoFile != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(photoFile.toURI().toString()),
+                    contentDescription = "Evidence photo",
+                    modifier = Modifier.fillMaxWidth().height(160.dp).clickable { /* expand */ },
+                    contentScale = ContentScale.Crop
+                )
+            }
+            if (item.evidenceUrl != null) {
+                Text("Verified: ${item.evidenceUrl}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+            }
+
             if (expanded) {
-                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = item.status == "COMPLIANT",
@@ -252,10 +301,15 @@ private fun ComplianceItemCard(
 
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { showEvidenceDialog = true }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Link, null, Modifier.size(16.dp))
+                    OutlinedButton(onClick = onCapturePhoto, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Default.CameraAlt, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Evidence")
+                        Text("Camera")
+                    }
+                    OutlinedButton(onClick = onPickGallery, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Default.PhotoLibrary, null, Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Gallery")
                     }
                     OutlinedButton(onClick = { showNotesDialog = true }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Default.Notes, null, Modifier.size(16.dp))
@@ -267,25 +321,11 @@ private fun ComplianceItemCard(
                     }
                 }
 
-                if (item.evidenceUrl != null) {
-                    Text("Evidence: ${item.evidenceUrl}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                }
                 if (item.notes != null) {
                     Text("Notes: ${item.notes}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
-    }
-
-    if (showEvidenceDialog) {
-        EvidenceDialog(
-            currentUrl = item.evidenceUrl,
-            onDismiss = { showEvidenceDialog = false },
-            onSave = { url ->
-                onEvidenceChange(url)
-                showEvidenceDialog = false
-            }
-        )
     }
 
     if (showNotesDialog) {
@@ -298,23 +338,6 @@ private fun ComplianceItemCard(
             }
         )
     }
-}
-
-@Composable
-private fun EvidenceDialog(currentUrl: String?, onDismiss: () -> Unit, onSave: (String) -> Unit) {
-    var url by remember { mutableStateOf(currentUrl ?: "") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Evidence URL") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Paste a link to a document, photo, or certificate", style = MaterialTheme.typography.bodySmall)
-                OutlinedTextField(value = url, onValueChange = { url = it }, label = { Text("URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            }
-        },
-        confirmButton = { TextButton(onClick = { onSave(url) }, enabled = url.isNotBlank()) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
 }
 
 @Composable
@@ -344,8 +367,8 @@ private fun EmptyComplianceState(onAddClick: () -> Unit) {
     }
 }
 
-@Composable
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun AddComplianceDialog(
     farmId: String,
     onDismiss: () -> Unit,
@@ -356,6 +379,7 @@ private fun AddComplianceDialog(
     var selectedCategory by remember { mutableStateOf("CERTIFICATION") }
     var dueDateMillis by remember { mutableStateOf<Long?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
+    val dateFmt = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     val categories = listOf("CERTIFICATION", "SAFETY", "ENVIRONMENTAL", "QUALITY", "LABOR", "OTHER")
 

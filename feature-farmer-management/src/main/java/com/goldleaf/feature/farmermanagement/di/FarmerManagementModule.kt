@@ -23,14 +23,15 @@ object FarmerManagementModule {
         database: AppDatabase,
         sessionManager: UserSessionManager , // Add this parameterm
     ): FarmerRepository {
-        return FarmerRepositoryImpl(  // ✅ Remove <Any?>
+        return FarmerRepositoryImpl(
             apiService = apiService,
             farmerDao = database.farmerDao(),
             farmDao = database.farmDao(),
-            certificationDao = database.certificationDao(),  // ✅ Add this
-            sessionManager = sessionManager , // ✅ Add this
+            certificationDao = database.certificationDao(),
+            sessionManager = sessionManager,
             cropDao = database.cropDao(),
-            plotDao = database.plotDao()
+            plotDao = database.plotDao(),
+            database = database
         )
     }
 }

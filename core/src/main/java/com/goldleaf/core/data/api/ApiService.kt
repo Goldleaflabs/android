@@ -484,6 +484,13 @@ interface ApiService {
     @POST("compliance-checklist/sync")
     suspend fun syncComplianceChecklist(@Body items: List<ComplianceChecklistEntity>): Response<SyncResponseDto>
 
+    @Multipart
+    @POST("compliance-checklist/upload/{id}")
+    suspend fun uploadCompliancePhoto(
+        @Path("id") id: String,
+        @Part photo: okhttp3.MultipartBody.Part
+    ): Response<EvidenceUploadResponse>
+
     @GET("compliance-checklist")
     suspend fun getComplianceChecklist(@Query("farmId") farmId: String? = null): Response<List<ComplianceChecklistEntity>>
 

@@ -25,6 +25,9 @@ interface SoilDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSoilTest(soilTest: SoilTestEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSoilTests(soilTests: List<SoilTestEntity>)
+
     @Update
     suspend fun updateSoilTest(soilTest: SoilTestEntity)
 

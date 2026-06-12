@@ -414,7 +414,7 @@ class CropDetailsViewModel @Inject constructor(
             val currentCrop = _uiState.value.crop
             if (currentCrop != null) {
                 // ✅ Validate transition
-                if (currentCrop.status == null || !currentCrop.status!!.canTransitionTo(newStatus)) {
+                if (currentCrop.status != null && !currentCrop.status!!.canTransitionTo(newStatus)) {
                     _uiState.value = _uiState.value.copy(
                         error = "Cannot transition from ${currentCrop.status?.getDisplayName() ?: "Unknown"} to ${newStatus.getDisplayName()}"
                     )

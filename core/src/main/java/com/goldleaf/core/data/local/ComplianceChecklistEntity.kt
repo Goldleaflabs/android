@@ -14,6 +14,7 @@ data class ComplianceChecklistEntity(
     @SerializedName("description") val description: String?,
     @SerializedName("status") val status: String,
     @SerializedName("evidence_url") val evidenceUrl: String?,
+    @SerializedName("evidence_local_path") val evidenceLocalPath: String? = null,
     @SerializedName("notes") val notes: String?,
     @SerializedName("reviewed_by") val reviewedBy: String?,
     @SerializedName("reviewed_at") val reviewedAt: Long?,

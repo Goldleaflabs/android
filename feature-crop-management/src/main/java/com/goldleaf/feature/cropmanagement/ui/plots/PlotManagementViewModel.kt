@@ -18,7 +18,8 @@ import javax.inject.Inject
 data class PlotUiState(
     val plots: List<PlotEntity> = emptyList(),
     val showAddDialog: Boolean = false,
-    val syncMessage: String? = null
+    val syncMessage: String? = null,
+    val error: String? = null
 )
 
 @HiltViewModel
@@ -47,6 +48,10 @@ class PlotManagementViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(showAddDialog = false)
     }
 
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+
     fun addPlot(farmId: String, name: String, size: Double, sizeUnit: String, soilType: String?, notes: String?, color: String) {
         viewModelScope.launch {
             val plot = PlotEntity(
@@ -70,6 +75,13 @@ class PlotManagementViewModel @Inject constructor(
 
     fun deletePlot(plot: PlotEntity) {
         viewModelScope.launch {
+            val cropsOnPlot = cropDao.getCropsByPlotId(plot.id)
+            if (cropsOnPlot.isNotEmpty()) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Cannot delete: ${cropsOnPlot.size} crop(s) planted on this plot"
+                )
+                return@launch
+            }
             plotDao.deletePlot(plot)
             loadPlots(plot.farmId)
         }

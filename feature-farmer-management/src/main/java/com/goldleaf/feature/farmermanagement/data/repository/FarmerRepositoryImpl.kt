@@ -23,6 +23,7 @@ import com.goldleaf.core.data.dto.farm.GeoPoint
 import com.goldleaf.core.data.dto.farm.WaterRequirement
 import com.goldleaf.core.data.dto.farm.WaterSource
 import com.goldleaf.core.data.dto.farm.toDomain
+import com.goldleaf.core.data.local.AppDatabase
 import com.goldleaf.core.data.local.CropEntity
 import com.goldleaf.core.data.local.CropStatus
 import com.goldleaf.core.data.local.FarmEntity
@@ -57,6 +58,7 @@ class FarmerRepositoryImpl @Inject constructor(
     private val cropDao: CropDao,
     private val certificationDao: CertificationDao,
     private val plotDao: PlotDao,
+    private val database: AppDatabase,
     private val sessionManager: UserSessionManager
 ) : FarmerRepository {
 
@@ -531,8 +533,21 @@ class FarmerRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 val data = response.body()!!
 
-                data.plots?.let { plotDao.insertPlots(it) }
-                data.crops?.let { cropDao.insertallCrop(it) }
+                // Save all synced entity types to local Room DB
+                data.plots?.let { database.plotDao().insertPlots(it) }
+                data.crops?.let { database.cropDao().insertallCrop(it) }
+                data.tasks?.let { database.taskDao().insertTasks(it) }
+                data.growthStages?.let { database.growthStageDao().insertGrowthStages(it) }
+                data.cropActivities?.let { activities ->
+                    activities.forEach { database.cropDao().insertActivity(it) }
+                }
+                data.productBatches?.let { database.productBatchDao().insertBatches(it) }
+                data.labTests?.let { database.labTestDao().insertTests(it) }
+                data.qualityParameters?.let { database.qualityParameterDao().insertParameters(it) }
+                data.blockchainRecords?.let { database.blockchainDao().insertRecords(it) }
+                data.soilTests?.let { database.soilDao().insertSoilTests(it) }
+                data.certifications?.let { database.certificationDao().insertCertifications(it) }
+                data.advisories?.let { database.advisoryDao().insertAdvisories(it) }
 
                 Result.Success(Unit)
             } else {
