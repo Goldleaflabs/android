@@ -334,15 +334,13 @@ fun ManageCropStatusSheet(
                             },
                             shape = MaterialTheme.shapes.small
                         ) {
-                            crop.status?.let {
-                                Text(
-                                    it.getDisplayName(),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Text(
+                                text = crop.status?.getDisplayName() ?: "Not Set",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -357,15 +355,14 @@ fun ManageCropStatusSheet(
                     enabled = false
                 )
             } else {
-                crop.status?.let {
-                    CropStatusProgressSlider(
-                        currentStatus = it,
-                        onStatusSelected = { newStatus ->
-                            onStatusUpdated(newStatus)
-                            onDismiss()
-                        }
-                    )
-                }
+                val effectiveStatus = crop.status ?: CropStatus.PLANNED
+                CropStatusProgressSlider(
+                    currentStatus = effectiveStatus,
+                    onStatusSelected = { newStatus ->
+                        onStatusUpdated(newStatus)
+                        onDismiss()
+                    }
+                )
             }
         }
     }
