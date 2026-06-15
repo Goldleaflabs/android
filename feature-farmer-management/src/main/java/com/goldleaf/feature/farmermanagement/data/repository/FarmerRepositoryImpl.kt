@@ -538,8 +538,9 @@ class FarmerRepositoryImpl @Inject constructor(
                 data.crops?.let { database.cropDao().insertallCrop(it) }
                 data.tasks?.let { database.taskDao().insertTasks(it) }
                 data.growthStages?.let { database.growthStageDao().insertGrowthStages(it) }
-                data.cropActivities?.let { activities ->
-                    activities.forEach { database.cropDao().insertActivity(it) }
+                val activities = data.cropActivities ?: data.activities
+                activities?.let { list ->
+                    list.forEach { database.cropDao().insertActivity(it) }
                 }
                 data.productBatches?.let { database.productBatchDao().insertBatches(it) }
                 data.labTests?.let { database.labTestDao().insertTests(it) }
@@ -548,6 +549,16 @@ class FarmerRepositoryImpl @Inject constructor(
                 data.soilTests?.let { database.soilDao().insertSoilTests(it) }
                 data.certifications?.let { database.certificationDao().insertCertifications(it) }
                 data.advisories?.let { database.advisoryDao().insertAdvisories(it) }
+                data.farms?.let { database.farmDao().insertAll(it) }
+                data.farmers?.let { farmers ->
+                    farmers.forEach { database.farmerDao().insertFarmer(it) }
+                }
+
+                // Update last sync timestamp
+                if (data.timestamp > 0) {
+                    val currentFarmer = farmerDao.getCurrentFarmerSync()
+                    currentFarmer?.let { farmerDao.updateFarmer(it.copy(lastSyncTime = data.timestamp)) }
+                }
 
                 Result.Success(Unit)
             } else {
