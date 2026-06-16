@@ -18,9 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
@@ -142,6 +146,22 @@ private fun ComplianceList(
     onDelete: (ComplianceChecklistEntity) -> Unit
 ) {
     val context = LocalContext.current
+    var pendingCaptureAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            pendingCaptureAction?.invoke()
+        } else {
+            Toast.makeText(
+                context,
+                "Camera permission is required to take compliance photos.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        pendingCaptureAction = null
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -161,19 +181,32 @@ private fun ComplianceList(
             }
             val photoExists = photoFile?.exists() == true
 
+            val launchCamera = {
+                val dir = File(context.filesDir, "compliance_evidence")
+                if (!dir.exists()) dir.mkdirs()
+                val tmpFile = File(dir, "tmp_${item.id}.jpg")
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context, "${context.packageName}.fileprovider", tmpFile
+                )
+                photoLauncher.launch(uri)
+            }
+
             ComplianceItemCard(
                 item = item,
                 photoExists = photoExists,
                 photoFile = if (photoExists) photoFile else null,
                 onStatusChange = { s -> onStatusChange(item, s) },
                 onCapturePhoto = {
-                    val dir = File(context.filesDir, "compliance_evidence")
-                    if (!dir.exists()) dir.mkdirs()
-                    val tmpFile = File(dir, "tmp_${item.id}.jpg")
-                    val uri = androidx.core.content.FileProvider.getUriForFile(
-                        context, "${context.packageName}.fileprovider", tmpFile
-                    )
-                    photoLauncher.launch(uri)
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        launchCamera()
+                    } else {
+                        pendingCaptureAction = launchCamera
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
                 },
                 onPickGallery = { galleryLauncher.launch("image/*") },
                 onNotesChange = { notes -> onNotesChange(item, notes) },

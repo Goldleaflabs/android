@@ -6,6 +6,7 @@ import com.goldleaf.core.auth.UserRole
 import com.goldleaf.core.auth.UserSessionManager
 import com.goldleaf.core.data.api.ApiService
 import com.goldleaf.core.data.dto.auth.LoginRequest
+import com.goldleaf.feature.farmermanagement.domain.repository.FarmerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val apiService: ApiService,
-    private val userSession: UserSessionManager
+    private val userSession: UserSessionManager,
+    private val farmerRepository: FarmerRepository
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -86,6 +88,13 @@ class LoginViewModel @Inject constructor(
                 } catch (e: Exception) { null }
 
                 userSession.startSession(userId = farmerId, authToken = token, role = role ?: UserRole.FARMER)
+
+                try {
+                    farmerRepository.syncAllFromServer(farmerId)
+                } catch (e: Exception) {
+                    // Keep login success even if sync fails; app can retry later
+                }
+
                 _loginState.value = LoginState.Success(farmerId)
 
             } catch (e: Exception) {
