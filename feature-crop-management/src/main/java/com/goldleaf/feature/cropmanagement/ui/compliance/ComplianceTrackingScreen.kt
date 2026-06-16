@@ -18,13 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import android.Manifest
-import android.content.pm.PackageManager
-import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
@@ -146,20 +142,12 @@ private fun ComplianceList(
     onDelete: (ComplianceChecklistEntity) -> Unit
 ) {
     val context = LocalContext.current
-    var pendingCaptureAction by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            pendingCaptureAction?.invoke()
-        } else {
-            Toast.makeText(
-                context,
-                "Camera permission is required to take compliance photos.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-        pendingCaptureAction = null
+    var pendingGalleryItem by remember { mutableStateOf<ComplianceChecklistEntity?>(null) }
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { pendingGalleryItem?.let { item -> onEvidenceCapture(item, it) } }
+        pendingGalleryItem = null
     }
 
     LazyColumn(
@@ -168,47 +156,20 @@ private fun ComplianceList(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(items, key = { it.id }) { item ->
-            val photoLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.TakePicture()
-            ) { /* success — galleryLauncher will handle the file */ }
-            val galleryLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { uri ->
-                uri?.let { onEvidenceCapture(item, it) }
-            }
             val photoFile = remember(item.evidenceLocalPath) {
                 item.evidenceLocalPath?.takeIf { it.isNotBlank() }?.let(::File)
             }
             val photoExists = photoFile?.exists() == true
-
-            val launchCamera = {
-                val dir = File(context.filesDir, "compliance_evidence")
-                if (!dir.exists()) dir.mkdirs()
-                val tmpFile = File(dir, "tmp_${item.id}.jpg")
-                val uri = androidx.core.content.FileProvider.getUriForFile(
-                    context, "${context.packageName}.fileprovider", tmpFile
-                )
-                photoLauncher.launch(uri)
-            }
 
             ComplianceItemCard(
                 item = item,
                 photoExists = photoExists,
                 photoFile = if (photoExists) photoFile else null,
                 onStatusChange = { s -> onStatusChange(item, s) },
-                onCapturePhoto = {
-                    if (ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.CAMERA
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        launchCamera()
-                    } else {
-                        pendingCaptureAction = launchCamera
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
+                onPickGallery = {
+                    pendingGalleryItem = item
+                    galleryLauncher.launch("image/*")
                 },
-                onPickGallery = { galleryLauncher.launch("image/*") },
                 onNotesChange = { notes -> onNotesChange(item, notes) },
                 onDelete = { onDelete(item) }
             )
@@ -222,7 +183,6 @@ private fun ComplianceItemCard(
     photoExists: Boolean = false,
     photoFile: File? = null,
     onStatusChange: (String) -> Unit,
-    onCapturePhoto: () -> Unit,
     onPickGallery: () -> Unit,
     onNotesChange: (String) -> Unit,
     onDelete: () -> Unit
@@ -297,7 +257,7 @@ private fun ComplianceItemCard(
             // Photo preview
             if (photoExists && photoFile != null) {
                 Image(
-                    painter = rememberAsyncImagePainter(photoFile.toURI().toString()),
+                    painter = rememberAsyncImagePainter(photoFile),
                     contentDescription = "Evidence photo",
                     modifier = Modifier.fillMaxWidth().height(160.dp).clickable { /* expand */ },
                     contentScale = ContentScale.Crop
@@ -336,23 +296,33 @@ private fun ComplianceItemCard(
 
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = onCapturePhoto, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.CameraAlt, null, Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Camera")
+                    IconButton(
+                        onClick = onPickGallery,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = "Pick from gallery"
+                        )
                     }
-                    OutlinedButton(onClick = onPickGallery, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.PhotoLibrary, null, Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Gallery")
+                    IconButton(
+                        onClick = { showNotesDialog = true },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notes,
+                            contentDescription = "Add notes"
+                        )
                     }
-                    OutlinedButton(onClick = { showNotesDialog = true }, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Notes, null, Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Notes")
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error)
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete item",
+                            tint = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
 
