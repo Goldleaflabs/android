@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,8 +36,9 @@ import com.goldleaf.feature.farmermanagement.ui.viewmodels.FarmSelectionViewMode
 fun FarmSelectionScreen(
     userId: String, // Assigned here from the NavGraph
     navController: NavController,
-    onFarmSelected: (farmId: String) -> Unit,  // ✅ CHANGE 1: Added farmerId parameter
-    viewModel: FarmSelectionViewModel = hiltViewModel()  // ✅ CHANGE 2: New ViewModel type
+    onFarmSelected: (farmId: String) -> Unit,
+    onNavigateToProfile: () -> Unit,
+    viewModel: FarmSelectionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentFarmer by viewModel.currentFarmer.collectAsStateWithLifecycle()  // ✅ CHANGE 3: Get farmerName from new ViewModel
@@ -78,6 +80,14 @@ fun FarmSelectionScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+
                     IconButton(onClick = {
                         if (userId.isNotBlank()) {
                             viewModel.refreshFarms(userId)

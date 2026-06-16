@@ -47,12 +47,13 @@ class FarmSetupViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val apiService: ApiService,
     private val userSession: UserSessionManager,
-    private val geocodingRepository: GeocodingRepository
+    private val geocodingRepository: GeocodingRepository,
+    private val farmDao: FarmDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FarmSetupUiState())
     val uiState: StateFlow<FarmSetupUiState> = _uiState.asStateFlow()
-// Add to FarmSetupViewModel
+
     private val _searchResults = MutableStateFlow<List<String>>(emptyList())
     val searchResults: StateFlow<List<String>> = _searchResults.asStateFlow()
 
@@ -337,11 +338,14 @@ class FarmSetupViewModel @Inject constructor(
                         return@launch
                     }
 
+                    // Persist the created farm locally for offline access and coordinate lookup
+                    farmDao.insertFarm(createdFarm.toEntity(userSession.getCurrentUserId() ?: farmId))
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             farmSaved = true,
-                            newFarmId = farmId  // ✅ NOW SET THE FARM ID
+                            newFarmId = farmId
                         )
                     }
 

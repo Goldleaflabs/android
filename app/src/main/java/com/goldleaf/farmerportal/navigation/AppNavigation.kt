@@ -150,7 +150,7 @@ fun AppNavigation(
             FarmSelectionScreen(
                 userId = farmerId,
                 navController = navController,
-                onFarmSelected = {farmId ->
+                onFarmSelected = { farmId ->
                     scope.launch {
                         userSession.setCurrentFarmId(farmId)
                     }
@@ -162,6 +162,9 @@ fun AppNavigation(
                         launchSingleTop = true
                         restoreState = true
                     }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Routes.farmerProfile(farmerId))
                 }
             )
         }

@@ -156,8 +156,10 @@ private fun ComplianceList(
             ) { uri ->
                 uri?.let { onEvidenceCapture(item, it) }
             }
-            val photoFile = remember { File(item.evidenceLocalPath) }
-            val photoExists = item.evidenceLocalPath != null && photoFile.exists()
+            val photoFile = remember(item.evidenceLocalPath) {
+                item.evidenceLocalPath?.takeIf { it.isNotBlank() }?.let(::File)
+            }
+            val photoExists = photoFile?.exists() == true
 
             ComplianceItemCard(
                 item = item,

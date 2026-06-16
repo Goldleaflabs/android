@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.goldleaf.core.data.api.ApiService
 import com.goldleaf.core.data.dto.auth.SyncResponseDto
 import com.goldleaf.core.data.local.SoilTestEntity
+import com.goldleaf.core.data.local.dao.FarmDao
 import com.goldleaf.core.data.local.dao.SoilDao
 import com.goldleaf.core.data.dto.farm.SoilType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +26,7 @@ data class SoilProfileUiState(
 @HiltViewModel
 class SoilProfileViewModel @Inject constructor(
     private val soilDao: SoilDao,
+    private val farmDao: FarmDao,
     private val apiService: ApiService
 ) : ViewModel() {
 
@@ -62,6 +64,7 @@ class SoilProfileViewModel @Inject constructor(
         notes: String?
     ) {
         viewModelScope.launch {
+            val farm = farmDao.getFarmById(farmId)
             val test = SoilTestEntity(
                 id = UUID.randomUUID().toString(),
                 farmId = farmId,
@@ -77,6 +80,8 @@ class SoilProfileViewModel @Inject constructor(
                 ec = ec,
                 labName = labName,
                 notes = notes,
+                latitude = farm?.latitude,
+                longitude = farm?.longitude,
                 createdAt = System.currentTimeMillis(),
                 lastSyncTime = System.currentTimeMillis()
             )
