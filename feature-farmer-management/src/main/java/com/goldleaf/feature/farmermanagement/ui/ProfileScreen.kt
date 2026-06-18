@@ -53,11 +53,13 @@ fun ProfileScreen(
     var location by remember { mutableStateOf("") }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState.farmer) {
-        uiState.farmer?.let {
-            name = it.name
-            email = it.email ?: ""
-            location = it.location ?: ""
+    // Pre-fill fields when farmer data first loads, and keep them in sync
+    val farmerData = uiState.farmer
+    LaunchedEffect(farmerData?.name, farmerData?.email, farmerData?.location) {
+        if (farmerData != null) {
+            if (name.isBlank()) name = farmerData.name
+            if (email.isBlank()) email = farmerData.email ?: ""
+            if (location.isBlank()) location = farmerData.location ?: ""
         }
     }
 

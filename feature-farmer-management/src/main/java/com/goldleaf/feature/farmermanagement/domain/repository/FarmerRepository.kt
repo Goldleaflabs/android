@@ -283,23 +283,6 @@ interface FarmerRepository {
     suspend fun updateFarmCrops(farmId: String, crops: List<CropMasterDto>): Result<List<FarmCrop>>
 
     /**
-     * Add a single crop to a farm with planting details
-     * @param farmId Farm's unique identifier
-     * @param cropId Crop's unique identifier
-     * @param plantingDate Date when crop was planted
-     * @param areaAllocated Area allocated for this crop in acres
-     * @param notes Additional notes about the planting
-     * @return Result containing the created FarmCrop association or error
-     */
-    suspend fun addCropToFarm(
-        farmId: String,
-        cropId: String,
-        plantingDate: java.time.LocalDateTime? = null,
-        areaAllocated: Double? = null,
-        notes: String? = null
-    ): Result<FarmCrop>
-
-    /**
      * Remove a crop from a farm
      * @param farmId Farm's unique identifier
      * @param farmCropId Farm-Crop association ID

@@ -190,17 +190,26 @@ class CropRepositoryImpl @Inject constructor(
             // 1. Save locally FIRST
             cropDao.insertCrop(crop)
 
-            // 2. Try to sync to server
+            // 2. Sync to the correct endpoint — POST /api/farms/{farmId}/crops
+            //    which saves to farm_crops (the user's crop selection for this farm)
             try {
-                val response = apiService.createCrop(crop)
-                if (response.isSuccessful) {
-                    Result.success(crop)
-                } else {
-                    Result.success(crop)
-                }
+                val request = com.goldleaf.core.data.dto.crop.AddCropToFarmRequest(
+                    cropId   = crop.cropId,
+                    farmerId = crop.farmerId,
+                    name     = crop.name,
+                    variety  = crop.variety,
+                    plantingDate = crop.plantingDate,
+                    area     = crop.area,
+                    status   = crop.status?.name,
+                    plotId   = crop.plotId,
+                    notes    = crop.notes
+                )
+                apiService.addCropToFarm(crop.farmId, request)
             } catch (e: Exception) {
-                Result.success(crop)
+                // Network error — data is safe locally, will sync when online
             }
+
+            Result.success(crop)
         } catch (e: Exception) {
             Result.failure(e)
         }

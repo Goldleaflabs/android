@@ -7,7 +7,6 @@ import com.goldleaf.core.data.api.ApiService
 import com.goldleaf.core.data.dto.FarmerUpdateDto
 import com.goldleaf.core.data.dto.auth.OTPRequest
 import com.goldleaf.core.data.dto.auth.OTPVerificationRequest
-import com.goldleaf.core.data.dto.crop.AddCropToFarmRequest
 import com.goldleaf.core.data.dto.crop.CropMasterDto
 import com.goldleaf.core.data.dto.crop.UpdateCropStatusRequest
 import com.goldleaf.core.data.dto.crop.UpdateFarmCropsRequest
@@ -730,36 +729,6 @@ class FarmerRepositoryImpl @Inject constructor(
                 }
             } catch (e: Exception) {
                 Result.Error("Error fetching categories: ${e.message}")
-            }
-        }
-    }
-
-    override suspend fun addCropToFarm(
-        farmId: String,
-        cropId: String,
-        plantingDate: java.time.LocalDateTime?,
-        areaAllocated: Double?,
-        notes: String?
-    ): Result<FarmCrop> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val request = AddCropToFarmRequest(
-                    cropId = cropId,
-                    plantingDate = plantingDate?.toString(),
-                    areaAllocated = areaAllocated,
-                    notes = notes
-                )
-
-                val response = apiService.addCropToFarm(farmId, request)
-
-                if (response.isSuccessful && response.body() != null) {
-                    val farmCrop = response.body()!!.toDomainModel()
-                    Result.Success(farmCrop)
-                } else {
-                    Result.Error("Failed to add crop to farm: ${response.message()}")
-                }
-            } catch (e: Exception) {
-                Result.Error("Error adding crop to farm: ${e.message}")
             }
         }
     }
