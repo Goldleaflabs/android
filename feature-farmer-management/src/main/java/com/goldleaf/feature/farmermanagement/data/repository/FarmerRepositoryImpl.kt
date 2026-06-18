@@ -257,7 +257,8 @@ class FarmerRepositoryImpl @Inject constructor(
                     Result.Success(farmWithId)
                 }
             } catch (e: Exception) {
-                // Network error - data is safe locally
+                // Network error - data is safe locally. Log for diagnostics.
+                Log.e("FarmRepository", "Network error adding farm", e)
                 Result.Success(farmWithId)
             }
         } catch (e: Exception) {
@@ -278,7 +279,8 @@ class FarmerRepositoryImpl @Inject constructor(
                     farmDao.updateFarm(updatedFarm.toEntity())
                 }
             } catch (e: Exception) {
-                // Network error - data is safe locally
+                // Network error - data is safe locally. Log for diagnostics.
+                Log.e("FarmRepository", "Network error updating farm", e)
             }
 
             Result.Success(farm)
@@ -296,7 +298,8 @@ class FarmerRepositoryImpl @Inject constructor(
             try {
                 apiService.deleteFarm(farm)
             } catch (e: Exception) {
-                // Network error - deletion is safe locally
+                // Network error - deletion is safe locally. Log for diagnostics.
+                Log.e("FarmRepository", "Network error deleting farm", e)
             }
 
             Result.Success(Unit)

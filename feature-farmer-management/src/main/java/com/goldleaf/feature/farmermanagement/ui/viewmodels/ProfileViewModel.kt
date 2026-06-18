@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 
@@ -38,7 +39,8 @@ class ProfileViewModel @Inject constructor(
     savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
-    private val farmerId: String = checkNotNull(savedStateHandle["farmerId"])
+    // Safely resolve farmerId: prefer navigation arg, fall back to session cache
+    private val farmerId: String = savedStateHandle["farmerId"] ?: userSession.getUserIdSync() ?: ""
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
@@ -48,6 +50,10 @@ class ProfileViewModel @Inject constructor(
 
     private fun loadProfileData() {
         viewModelScope.launch {
+            if (farmerId.isBlank()) {
+                _uiState.update { it.copy(isLoading = false, error = "Missing farmerId") }
+                return@launch
+            }
             try {
                 farmerRepository.getCurrentFarmer(farmerId).collect { farmer ->
                     if (farmer != null) {
@@ -61,7 +67,13 @@ class ProfileViewModel @Inject constructor(
 
                         if (storedLat != null && storedLng != null) {
                             val resolved = withContext(Dispatchers.IO) {
-                                try { geocodingRepository.getAddress(storedLat, storedLng) } catch (_: Exception) { null }
+                                try {
+                                    withTimeoutOrNull(3000L) {
+                                        geocodingRepository.getAddress(storedLat, storedLng)
+                                    }
+                                } catch (e: Exception) {
+                                    null
+                                }
                             }
                             displayLocation = resolved?.county?.takeIf { it.isNotBlank() } ?: "Kenya"
                         } else {
@@ -164,19 +176,35 @@ class ProfileViewModel @Inject constructor(
                 val location = fusedLocationClient.getCurrentLocation(request, null).await()
 
                 if (location != null) {
-                    // Get readable address using reverse geocoding
-                    val address = geocodingRepository.getAddress(location.latitude, location.longitude)
-                    val district = address.subCounty.takeIf { it.isNotBlank() } ?: address.ward.takeIf { it.isNotBlank() } ?: address.village.takeIf { it.isNotBlank() } ?: "Unknown District"
-                    val region = address.county.takeIf { it.isNotBlank() } ?: address.fullAddress.takeIf { it.isNotBlank() } ?: "Unknown Region"
-                    val formattedLocation = "$district, $region"
-                    _uiState.update { it.copy(
-                        isLoadingLocation = false,
-                        locationError = null,
-                        gpsLocationRaw = formattedLocation,
-                        gpsFormattedAddress = address,
-                        gpsLatitude = location.latitude,
-                        gpsLongitude = location.longitude
-                    )}
+                    // Get readable address using reverse geocoding with timeout
+                    val address = withContext(Dispatchers.IO) {
+                        try {
+                            withTimeoutOrNull(5000L) {
+                                geocodingRepository.getAddress(location.latitude, location.longitude)
+                            }
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+
+                    if (address != null) {
+                        val district = address.subCounty.takeIf { it.isNotBlank() } ?: address.ward.takeIf { it.isNotBlank() } ?: address.village.takeIf { it.isNotBlank() } ?: "Unknown District"
+                        val region = address.county.takeIf { it.isNotBlank() } ?: address.fullAddress.takeIf { it.isNotBlank() } ?: "Unknown Region"
+                        val formattedLocation = "$district, $region"
+                        _uiState.update { it.copy(
+                            isLoadingLocation = false,
+                            locationError = null,
+                            gpsLocationRaw = formattedLocation,
+                            gpsFormattedAddress = address,
+                            gpsLatitude = location.latitude,
+                            gpsLongitude = location.longitude
+                        )}
+                    } else {
+                        _uiState.update { it.copy(
+                            isLoadingLocation = false,
+                            locationError = "Failed to resolve address from GPS coordinates"
+                        )}
+                    }
                 } else {
                     _uiState.update { it.copy(
                         isLoadingLocation = false,

@@ -14,10 +14,14 @@ class AuthInterceptor @Inject constructor(
         val originalRequest = chain.request()
         val token = userSessionManager.getAuthTokenSync()
         val requestBuilder = originalRequest.newBuilder()
-        token?.let {
-            requestBuilder.header("Authorization", "Bearer $it")
-            Log.d("AuthInterceptor", "Added header: Bearer $it")
-        } ?: Log.d("AuthInterceptor", "No token available")
+        if (!token.isNullOrBlank()) {
+            requestBuilder.header("Authorization", "Bearer $token")
+            // Mask token in logs: show first/last 6 characters only
+            val masked = if (token.length > 12) token.take(6) + "..." + token.takeLast(6) else "[redacted]"
+            Log.d("AuthInterceptor", "Added Authorization header: Bearer $masked")
+        } else {
+            Log.d("AuthInterceptor", "No token available")
+        }
 
         return chain.proceed(requestBuilder.build())
     }
