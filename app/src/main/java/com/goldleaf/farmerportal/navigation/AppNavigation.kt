@@ -193,8 +193,7 @@ fun AppNavigation(
         composable(
             route = Routes.FARMER_PROFILE,
             arguments = listOf(navArgument("farmerId") { type = NavType.StringType })
-        ) { backStackEntry ->
-
+        ) {
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToChangePassword = {
@@ -220,7 +219,7 @@ fun AppNavigation(
 
             FarmSetupScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onSetupComplete = { newFarmId ->
+                onSetupComplete = { _ ->
                     val target = Routes.farmSelection(farmerIdForReturn)
                     navController.navigate(target) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = false }
@@ -253,9 +252,7 @@ fun AppNavigation(
             route = Routes.CROP_SELECTION,
             arguments = listOf(navArgument("farmId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val farmId = backStackEntry.arguments?.getString("farmId") ?: return@composable
-        CropSelectionScreen(
-                farmId = farmId,
+            CropSelectionScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -287,8 +284,8 @@ fun AppNavigation(
                 onNavigateToAddTask = {
                     navController.navigate(Routes.addCropTasks(cropId))
                 },
-                onNavigateToInputTracking = { cropId, farmId, farmerId ->
-                    navController.navigate(Routes.inputTracking(cropId, farmId, farmerId))
+                onNavigateToInputTracking = { innerCropId, farmId, farmerId ->
+                    navController.navigate(Routes.inputTracking(innerCropId, farmId, farmerId))
                 }
             )
         }

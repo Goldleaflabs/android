@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.goldleaf.core.auth.UserRole
-import com.goldleaf.core.auth.UserSessionManager
 import com.goldleaf.farmerportal.navigation.AppRoutes
 
 private fun getIconForRoute(route: String): ImageVector {
@@ -28,8 +27,7 @@ private fun getIconForRoute(route: String): ImageVector {
 
 @Composable
 fun BottomNavigationBar(
-    navController: NavController,
-    userSession: UserSessionManager
+    navController: NavController
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

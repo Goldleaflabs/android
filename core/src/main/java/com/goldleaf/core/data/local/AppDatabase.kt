@@ -140,14 +140,14 @@ object AppDatabaseBuilder {
     ): AppDatabase {
         // Migration to add structured address columns to farmers table
         val MIGRATION_11_12 = object : Migration(11, 12) {
-            override fun migrate(database: SupportSQLiteDatabase) {
+            override fun migrate(db: SupportSQLiteDatabase) {
                 // Add new columns with NULL default so existing rows are preserved
-                database.execSQL("ALTER TABLE farmers ADD COLUMN district TEXT")
-                database.execSQL("ALTER TABLE farmers ADD COLUMN region TEXT")
-                database.execSQL("ALTER TABLE farmers ADD COLUMN street TEXT")
-                database.execSQL("ALTER TABLE farmers ADD COLUMN country TEXT")
-                database.execSQL("ALTER TABLE farmers ADD COLUMN latitude REAL")
-                database.execSQL("ALTER TABLE farmers ADD COLUMN longitude REAL")
+                db.execSQL("ALTER TABLE farmers ADD COLUMN district TEXT")
+                db.execSQL("ALTER TABLE farmers ADD COLUMN region TEXT")
+                db.execSQL("ALTER TABLE farmers ADD COLUMN street TEXT")
+                db.execSQL("ALTER TABLE farmers ADD COLUMN country TEXT")
+                db.execSQL("ALTER TABLE farmers ADD COLUMN latitude REAL")
+                db.execSQL("ALTER TABLE farmers ADD COLUMN longitude REAL")
             }
         }
         return Room.databaseBuilder(

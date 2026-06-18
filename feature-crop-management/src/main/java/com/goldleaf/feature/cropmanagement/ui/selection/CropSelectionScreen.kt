@@ -23,7 +23,6 @@ import com.goldleaf.core.data.local.PlotEntity
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CropSelectionScreen(
-    farmId: String,
     onNavigateBack: () -> Unit,
     viewModel: SelectionListViewModel = hiltViewModel()
 ) {

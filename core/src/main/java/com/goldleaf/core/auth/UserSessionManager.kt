@@ -86,6 +86,10 @@ class UserSessionManager @Inject constructor(
                     try { UserRole.valueOf(it) } catch (e: Exception) { UserRole.FARMER }
                 } ?: UserRole.FARMER
                 cachedFarmId = prefs[SELECTED_FARM_ID]
+
+                // Populate the StateFlow so consumers don't hang waiting for a
+                // value that only gets set via startSession() at login time.
+                _currentUserId.value = cachedUserId
             }
         }
     }
@@ -149,12 +153,12 @@ class UserSessionManager @Inject constructor(
                     phone = dto.phone,
                     email = dto.email,
                     location = dto.location,
-                    district = dto.contactInfo?.address?.district,
-                    region = dto.contactInfo?.address?.region,
-                    street = dto.contactInfo?.address?.street,
-                    country = dto.contactInfo?.address?.country,
-                    latitude = dto.contactInfo?.address?.latitude,
-                    longitude = dto.contactInfo?.address?.longitude,
+                    district = dto.contactInfo.address?.district,
+                    region = dto.contactInfo.address?.region,
+                    street = dto.contactInfo.address?.street,
+                    country = dto.contactInfo.address?.country,
+                    latitude = dto.contactInfo.address?.latitude,
+                    longitude = dto.contactInfo.address?.longitude,
                     lastSyncTime = System.currentTimeMillis(),
                     createdAt = dto.createdAt,
                     updatedAt = dto.updatedAt,

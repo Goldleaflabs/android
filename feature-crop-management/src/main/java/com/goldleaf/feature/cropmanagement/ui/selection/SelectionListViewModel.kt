@@ -108,7 +108,7 @@ class SelectionListViewModel @Inject constructor(
             _uiState.update { it.copy(savingCropIds = it.savingCropIds + selectedCrop.id) }
 
             val farmerId = userSession.currentUserId.value
-                ?: userSession.currentUserId.first()
+                ?: userSession.getCurrentUserId()
                 ?: return@launch
 
             val now = java.time.LocalDateTime.now().toString()
