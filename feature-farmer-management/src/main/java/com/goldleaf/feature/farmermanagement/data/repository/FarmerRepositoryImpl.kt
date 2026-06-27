@@ -495,21 +495,12 @@ class FarmerRepositoryImpl @Inject constructor(
 
     override suspend fun syncFarmerData(): Result<Unit> {
         return try {
-            // Fetch latest farmer data from server
             val response = apiService.getCurrentFarmer()
 
             if (response.isSuccessful && response.body() != null) {
                 val farmer = response.body()!!
 
-                // Update local database
                 farmerDao.insertFarmer(farmer.toEntity())
-
-                // Update last sync time
-                val currentTime = System.currentTimeMillis()
-                val currentFarmer = farmerDao.getCurrentFarmerSync()
-                currentFarmer?.let {
-                    farmerDao.updateFarmer(it.copy(lastSyncTime = currentTime))
-                }
 
                 Result.Success(Unit)
             } else {
@@ -522,9 +513,9 @@ class FarmerRepositoryImpl @Inject constructor(
 
     override suspend fun isDataStale(): Boolean {
         // Check if local data is older than 1 hour
-        val lastSync = farmerDao.getLastSyncTime()
+        val lastSync = farmerDao.getLastSyncTime() ?: 0L
         val now = System.currentTimeMillis()
-        return (now - lastSync!!) > (60 * 60 * 1000) // 1 hour
+        return (now - lastSync) > (60 * 60 * 1000) // 1 hour
     }
 
     override suspend fun syncAllFromServer(farmerId: String): Result<Unit> {
@@ -550,10 +541,67 @@ class FarmerRepositoryImpl @Inject constructor(
                 data.blockchainRecords?.let { database.blockchainDao().insertRecords(it) }
                 data.soilTests?.let { database.soilDao().insertSoilTests(it) }
                 data.certifications?.let { database.certificationDao().insertCertifications(it) }
+                data.certificationRequirements?.let { list ->
+                    list.forEach { database.certificationRequirementDao().insertRequirement(it) }
+                }
+                data.auditRecords?.let { list ->
+                    list.forEach { database.auditRecordDao().insertAudit(it) }
+                }
+                data.harvestRecords?.let { list ->
+                    list.forEach { database.harvestDao().insertHarvest(it) }
+                }
                 data.advisories?.let { database.advisoryDao().insertAdvisories(it) }
                 data.farms?.let { database.farmDao().insertAll(it) }
                 data.farmers?.let { farmers ->
                     farmers.forEach { database.farmerDao().insertFarmer(it) }
+                }
+                data.cropVarieties?.let { list ->
+                    list.forEach { database.cropVarietyDao().insertVariety(it) }
+                }
+                data.cropTasks?.let { list ->
+                    list.forEach { database.cropTaskDao().insertTask(it) }
+                }
+                data.cropMonitoringRecords?.let { list ->
+                    list.forEach { database.cropMonitoringDao().insertRecord(it) }
+                }
+                data.seasonalPlans?.let { list ->
+                    list.forEach { database.seasonalPlanDao().insertPlan(it) }
+                }
+                data.complianceChecklist?.let { list ->
+                    list.forEach { database.complianceChecklistDao().insertItem(it) }
+                }
+                data.marketPrices?.let { list ->
+                    list.forEach { database.marketDao().insertMarketPrice(it) }
+                }
+                data.monitoringRecords?.let { list ->
+                    database.monitoringDao().insertMonitoringRecords(list)
+                }
+                data.officers?.let { list ->
+                    database.officerDao().insertOfficers(list)
+                }
+                data.cropMaster?.let { list ->
+                    database.cropMasterDao().insertCrops(list)
+                }
+                data.productJourneys?.let { list ->
+                    database.productJourneyDao().insertJourneys(list)
+                }
+                data.journeyEvents?.let { list ->
+                    database.journeyEventDao().insertEvents(list)
+                }
+                data.payments?.let { list ->
+                    database.paymentDao().insertPayments(list)
+                }
+                data.harvestDeliveries?.let { list ->
+                    database.harvestDeliveryDao().insertDeliveries(list)
+                }
+                data.batchSales?.let { list ->
+                    database.batchSalesDao().insertSales(list)
+                }
+                data.farmerDeductions?.let { list ->
+                    database.deductionDao().insertDeductions(list)
+                }
+                data.farmerPayoutInfo?.let { list ->
+                    list.forEach { database.farmerPayoutInfoDao().insert(it) }
                 }
 
                 // Update last sync timestamp

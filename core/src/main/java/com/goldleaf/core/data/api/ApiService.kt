@@ -467,9 +467,6 @@ interface ApiService {
     @GET("api/farms/{farmId}/crops/recommendations")
     suspend fun getRecommendedCrops(@Path("farmId") farmId: String,  @Query("soilType") soilType: String?,  @Query("waterAvailability") waterAvailability: String? ): Response<List<CropDto>>
 
-    @POST("sync/upload")
-    suspend fun syncUpload(@Body data: SyncDataDto): Response<SyncResponseDto>
-
     @GET("sync/download")
     suspend fun syncDownload( @Query("userId") userId: String, @Query("lastSync") lastSyncTimestamp: Long ): Response<SyncDataDto>
 

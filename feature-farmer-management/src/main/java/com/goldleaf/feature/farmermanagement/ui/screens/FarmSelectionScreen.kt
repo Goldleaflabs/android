@@ -37,7 +37,7 @@ fun FarmSelectionScreen(
     userId: String, // Assigned here from the NavGraph
     navController: NavController,
     onFarmSelected: (farmId: String) -> Unit,
-    onNavigateToProfile: () -> Unit,
+    onNavigateToProfile: (farmerId: String) -> Unit,
     viewModel: FarmSelectionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,7 +80,7 @@ fun FarmSelectionScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToProfile) {
+                    IconButton(onClick = { onNavigateToProfile(userId) }) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Profile",

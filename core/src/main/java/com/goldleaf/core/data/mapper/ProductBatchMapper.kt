@@ -2,8 +2,8 @@ package com.goldleaf.core.data.mapper
 
 import com.goldleaf.core.data.local.ProductBatchEntity
 import com.goldleaf.core.data.dto.BatchDto
+import com.goldleaf.core.data.local.BlockchainStatus
 
-// ✅ From remote DTO → Domain model
 fun BatchDto.toDomain(): ProductBatchEntity {
     return ProductBatchEntity(
         id = id,
@@ -16,15 +16,14 @@ fun BatchDto.toDomain(): ProductBatchEntity {
         farmerName = farmerName,
         qualityGrade = qualityGrade,
         blockchainHash = blockchainHash,
-        blockchainStatus = blockchainStatus,
+        blockchainStatus = blockchainStatus.name,
         blockchainTimestamp = blockchainTimestamp,
         createdAt = System.currentTimeMillis(),
-        lastSyncTime = System.currentTimeMillis(),
-        syncedToServer = true
+        updatedAt = System.currentTimeMillis(),
+        lastSyncTime = System.currentTimeMillis()
     )
 }
 
-// ✅ From local entity → Domain model
 fun ProductBatchEntity.toDomain(): BatchDto {
     return BatchDto(
         id = id,
@@ -36,7 +35,7 @@ fun ProductBatchEntity.toDomain(): BatchDto {
         harvestDate = harvestDate,
         productType = productType,
         qualityGrade = qualityGrade,
-        blockchainStatus = blockchainStatus,
+        blockchainStatus = try { BlockchainStatus.valueOf(blockchainStatus) } catch (_: Exception) { BlockchainStatus.PENDING },
         blockchainTimestamp = blockchainTimestamp,
         blockchainHash = blockchainHash,
         updatedAt = System.currentTimeMillis().toString()

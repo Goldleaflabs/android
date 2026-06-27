@@ -73,8 +73,7 @@ class BatchRepositoryImpl @Inject constructor(
                     val updatedEntity = entity.copy(
                         id = dto.id,
                         blockchainHash = dto.blockchainHash,
-                        blockchainStatus = dto.blockchainStatus,
-                        syncedToServer = true
+                        blockchainStatus = dto.blockchainStatus.name
                     )
                     batchDao.updateBatch(updatedEntity)
                     Result.success(updatedEntity)
@@ -127,10 +126,10 @@ class BatchRepositoryImpl @Inject constructor(
                         farmerName = dto.farmerName,
                         qualityGrade = dto.qualityGrade,
                         blockchainHash = dto.blockchainHash,
-                        blockchainStatus = dto.blockchainStatus,
+                        blockchainStatus = dto.blockchainStatus.name,
                         blockchainTimestamp = dto.blockchainTimestamp,
                         createdAt = System.currentTimeMillis(),
-                        syncedToServer = true
+                        updatedAt = System.currentTimeMillis()
                     )
                 }
                 batchDao.insertBatches(batches)
@@ -211,6 +210,6 @@ class BatchRepositoryImpl @Inject constructor(
         farmerId = farmerId, farmerName = farmerName,
         qualityGrade = qualityGrade, blockchainHash = blockchainHash,
         blockchainStatus = blockchainStatus, blockchainTimestamp = blockchainTimestamp,
-        createdAt = createdAt, syncedToServer = syncedToServer
+        createdAt = createdAt, updatedAt = updatedAt
     )
 }

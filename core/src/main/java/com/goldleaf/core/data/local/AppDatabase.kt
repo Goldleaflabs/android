@@ -37,6 +37,7 @@ import com.goldleaf.core.data.local.dao.HarvestDeliveryDao
 import com.goldleaf.core.data.local.dao.BatchSalesDao
 import com.goldleaf.core.data.local.dao.DeductionDao
 import com.goldleaf.core.data.local.dao.FarmerPayoutInfoDao
+import com.goldleaf.core.data.local.dao.OfficerDao
 
 @Database(
     entities = [
@@ -76,14 +77,13 @@ import com.goldleaf.core.data.local.dao.FarmerPayoutInfoDao
         DeductionEntity::class,
         FarmerPayoutInfoEntity::class
     ],
-    version = 18,
+    version = 19,
     exportSchema = false
 )
 
-@TypeConverters(Converters::class,
+@TypeConverters(    Converters::class,
     CropTypeConverters::class,
     CertificationStatusConverter::class,
-    ProductStatusConverter::class,
     JourneyStatusConverter::class,
     QualityStatusConverter::class,
     TestStatusConverter::class,
@@ -127,6 +127,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun batchSalesDao(): BatchSalesDao
     abstract fun deductionDao(): DeductionDao
     abstract fun farmerPayoutInfoDao(): FarmerPayoutInfoDao
+    abstract fun officerDao(): OfficerDao
 }
 
 // DATABASE BUILDER

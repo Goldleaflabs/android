@@ -52,6 +52,7 @@ import com.goldleaf.certification.navigation.productAuthNavGraph
 import com.goldleaf.feature.farmermanagement.ui.screens.FarmSelectionScreen
 import com.goldleaf.feature.farmermanagement.ui.screens.MyCropsScreen
 import com.goldleaf.feature.farmermanagement.ui.screens.TasksListScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object Routes {
@@ -151,7 +152,7 @@ fun AppNavigation(
                 userId = farmerId,
                 navController = navController,
                 onFarmSelected = { farmId ->
-                    scope.launch {
+                    scope.launch(Dispatchers.IO) {
                         userSession.setCurrentFarmId(farmId)
                     }
                     navController.navigate(Routes.dashboard(farmId)) {

@@ -197,7 +197,7 @@ fun BatchCard(
                     Text("${batch.quantity} ${batch.unit}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Harvest: ${batch.harvestDate}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                BatchStatusChip(status = batch.blockchainStatus.name)
+                BatchStatusChip(status = batch.blockchainStatus)
             }
 
             Spacer(Modifier.height(16.dp))

@@ -39,13 +39,20 @@ class ProfileViewModel @Inject constructor(
     savedStateHandle: androidx.lifecycle.SavedStateHandle
 ) : ViewModel() {
 
-    // Safely resolve farmerId: prefer navigation arg, fall back to session cache
-    private val farmerId: String = savedStateHandle["farmerId"] ?: userSession.getUserIdSync() ?: ""
+    // farmerId must be provided via navigation
+    private val _farmerId = MutableStateFlow<String?>(savedStateHandle["farmerId"])
+    private val farmerId: String get() = _farmerId.value ?: ""
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
-        loadProfileData()
+        // Require farmerId from navigation args
+        val initialFarmerId = _farmerId.value
+        if (initialFarmerId.isNullOrBlank()) {
+            _uiState.value = ProfileUiState(isLoading = false, error = "Missing farmerId - farmerId must be provided via navigation")
+        } else {
+            loadProfileData()
+        }
     }
 
     private fun loadProfileData() {

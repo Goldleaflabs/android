@@ -40,8 +40,8 @@ import com.goldleaf.feature.farmermanagement.ui.viewmodels.FarmerManagementViewM
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FarmerManagementScreen(
-    farmerId: String, // 👈 add this parameter
-    onNavigateToProfile: () -> Unit,
+    farmerId: String,
+    onNavigateToProfile: (farmerId: String) -> Unit,
     onNavigateToFarmFencing: (String) -> Unit,
     viewModel: FarmerManagementViewModel = hiltViewModel()
 ) {
@@ -69,7 +69,7 @@ fun FarmerManagementScreen(
             actions = {
                 // Profile / Account Settings Button
                 Button(
-                    onClick = onNavigateToProfile,
+                    onClick = { onNavigateToProfile(farmerId) },
                     modifier = Modifier.height(36.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.secondaryContainer,
@@ -151,8 +151,8 @@ fun FarmerManagementScreen(
 @Composable
 private fun DashboardContent(
     dashboardData: FarmerDashboardData,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToFarmFencing: (String) -> Unit   // ← Change this name
+    onNavigateToProfile: (String) -> Unit, // Corrected parameter type to accept a String
+    onNavigateToFarmFencing: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -163,7 +163,7 @@ private fun DashboardContent(
         item {
             FarmerProfileCard(
                 farmer = dashboardData.farmer,
-                onClick = onNavigateToProfile
+                onClick = { onNavigateToProfile(dashboardData.farmer.id) } // Now passing the string ID correctly
             )
         }
 
@@ -562,10 +562,6 @@ private fun FarmCard(
         }
     }
 }
-// =====================================================
-// File: FarmerManagementScreen.kt - UI Components (Part 2)
-// Location: feature-farmer-management/src/main/kotlin/com/goldleaf/feature/farmermanagement/ui/screens/FarmerManagementScreen.kt
-// =====================================================
 
 @Composable
 private fun WeatherCard(weather: WeatherSummary) {
@@ -673,7 +669,7 @@ private fun ActivityItem(activity: DashboardActivity) {
                 }
 
                 Text(
-                    text = activity.timestamp.toString(), // Format this properly
+                    text = activity.timestamp.toString(),
                     fontSize = 12.sp,
                     color = colorScheme.onSurfaceVariant
                 )
@@ -722,7 +718,6 @@ private fun TaskItem(task: Task) {
                     TaskPriority.HIGH -> Icons.Default.KeyboardArrowUp
                     TaskPriority.MEDIUM -> Icons.Default.Remove
                     TaskPriority.LOW -> Icons.Default.KeyboardArrowDown
-                    else -> {Icons.Default.Remove}
                 },
                 contentDescription = task.priority.name,
                 tint = priorityAccentColor,
@@ -748,7 +743,7 @@ private fun TaskItem(task: Task) {
                 )
 
                 Text(
-                    text = "Due: ${task.dueDate}", // Format this properly
+                    text = "Due: ${task.dueDate}",
                     fontSize = 12.sp,
                     color = priorityAccentColor,
                     fontWeight = FontWeight.Medium
@@ -782,7 +777,6 @@ private fun NotificationItem(notification: Notification) {
         NotificationType.TRAINING -> colorScheme.surfaceVariant
         NotificationType.TASK -> colorScheme.errorContainer
         NotificationType.SYSTEM -> colorScheme.surfaceVariant
-        else -> colorScheme.surface
     }
     val notificationAccentColor = when (notification.type) {
         NotificationType.WEATHER -> Color(0xFF1976D2)
@@ -838,7 +832,7 @@ private fun NotificationItem(notification: Notification) {
                 )
 
                 Text(
-                    text = notification.timestamp.toString(), // Format this properly
+                    text = notification.timestamp.toString(),
                     fontSize = 10.sp,
                     color = colorScheme.onSurfaceVariant
                 )

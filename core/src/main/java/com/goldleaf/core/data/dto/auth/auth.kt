@@ -672,7 +672,6 @@ data class SyncDataDto(
     val tasks: List<TaskEntity>? = null,
     val advisories: List<AdvisoryEntity>? = null,
     val marketPrices: List<MarketPriceEntity>? = null,
-    val weather: List<WeatherEntity>? = null,
     val certifications: List<CertificationEntity>? = null,
     val certificationRequirements: List<CertificationRequirementEntity>? = null,
     val auditRecords: List<AuditRecordEntity>? = null,

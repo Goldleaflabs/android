@@ -59,24 +59,6 @@ class CertificationStatusConverter {
     }
 }
 
-class ProductStatusConverter {
-
-    @TypeConverter
-    fun fromProductStatus(status: ProductStatus): String {
-        return status.name
-    }
-
-    @TypeConverter
-    fun toProductStatus(status: String): ProductStatus {
-        return try {
-            ProductStatus.valueOf(status)
-        } catch (e: IllegalArgumentException) {
-            // Fallback to default status if invalid value
-            ProductStatus.HARVESTED
-        }
-    }
-}
-
 class JourneyStatusConverter {
     @TypeConverter
     fun fromJourneyStatus(status: JourneyStatus): String {

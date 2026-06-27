@@ -164,9 +164,8 @@ class ComplianceTrackingViewModel @Inject constructor(
                 if (response.isSuccessful && response.body() != null) {
                     val url = response.body()!!.evidenceUrl
                     val updated = item.copy(evidenceUrl = url)
-                    withContext(Dispatchers.Main) {
-                        dao.updateItem(updated)
-                    }
+                    // Keep database operation on IO dispatcher, do not switch to Main
+                    dao.updateItem(updated)
                 }
             } catch (_: Exception) {}
         }

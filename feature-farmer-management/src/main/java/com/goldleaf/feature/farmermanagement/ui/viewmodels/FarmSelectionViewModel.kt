@@ -74,7 +74,10 @@ class FarmSelectionViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val farmerId = currentFarmer.value?.id ?: return@launch
-                val activities = cropDao.getActivitiesByFarmerId(farmerId).first()
+                // Fetch activities on IO dispatcher to avoid Main thread blocking
+                val activities = withContext(Dispatchers.IO) {
+                    cropDao.getActivitiesByFarmerId(farmerId).first()
+                }
                     .map { it.description }
                 _uiState.update { it.copy(recentActivities = activities) }
             } catch (e: Exception) {

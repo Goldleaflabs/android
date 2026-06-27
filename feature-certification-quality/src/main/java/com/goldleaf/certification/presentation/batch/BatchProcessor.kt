@@ -57,16 +57,20 @@ object BatchProcessor {
 
                 // Persist a local harvest record (best-effort)
                 val harvest = HarvestRecordEntity(
+                    id = UUID.randomUUID().toString(),
                     cropId = crop.id,
-                    cropName = crop.name,
-                    variety = crop.variety ?: "",
-                    areaHa = crop.area ?: 0.0,
-                    bags = bags,
-                    weightKg = qtyKg,
-                    pricePerKg = 0.0,
-                    totalRevenue = 0.0,
+                    farmId = crop.farmId,
                     harvestDate = System.currentTimeMillis(),
-                    batchId = created.batchNumber
+                    quantityHarvested = qtyKg,
+                    unit = "kg",
+                    expectedYield = crop.expectedYield,
+                    actualYield = qtyKg,
+                    yieldQuality = null,
+                    weatherCondition = null,
+                    laborCost = null,
+                    notes = "Harvested ${qtyKg} kg (${bags} bags) from batch ${created.batchNumber}",
+                    status = "COMPLETED",
+                    farmerId = farmerId
                 )
 
                 try {

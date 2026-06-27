@@ -102,7 +102,8 @@ fun VerificationResponseDto.toDomainModel(): VerificationResult {
             farmerName = dto.farmerName,
             qualityGrade = dto.qualityGrade,
             blockchainHash = dto.blockchainHash,
-            blockchainStatus = dto.blockchainStatus
+            blockchainStatus = dto.blockchainStatus.name,
+            blockchainTimestamp = dto.blockchainTimestamp
         )
     }
     return VerificationResult(

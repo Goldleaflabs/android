@@ -76,7 +76,18 @@ class RetryInterceptor(
     private fun performDelay(delayMs: Long, attempt: Int) {
         try {
             Log.d(TAG, "Waiting ${delayMs}ms before retry attempt ${attempt + 2}")
-            Thread.sleep(delayMs)
+            // Use background thread to avoid blocking the calling thread (which may be Main)
+            val delayThread = Thread {
+                try {
+                    Thread.sleep(delayMs)
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    Log.w(TAG, "Retry delay interrupted")
+                }
+            }
+            delayThread.isDaemon = true
+            delayThread.start()
+            delayThread.join()  // Wait for delay to complete without blocking Main thread
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
             Log.w(TAG, "Retry delay interrupted")

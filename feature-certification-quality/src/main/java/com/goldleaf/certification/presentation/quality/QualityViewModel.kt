@@ -157,6 +157,7 @@ class QualityViewModel @Inject constructor(
                 val obj = JSONObject(resultsJson)
                 val keys = obj.keys()
                 val list = mutableListOf<TestParameter>()
+                // JSON parsing loop - keep on Main if small, but could be moved to Default for large objects
                 while (keys.hasNext()) {
                     val key = keys.next()
                     list.add(TestParameter(
