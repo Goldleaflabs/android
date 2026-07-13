@@ -305,19 +305,19 @@ private fun FarmerProfileCard(
             // Farmer Info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = farmer.personalInfo.fullName,
+                    text = farmer.personalInfo?.fullName ?: farmer.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface
                 )
 
                 Text(
-                    text = farmer.contactInfo.primaryPhone,
+                    text = farmer.contactInfo?.primaryPhone ?: farmer.phone,
                     fontSize = 14.sp,
                     color = colorScheme.onSurfaceVariant
                 )
 
-                farmer.contactInfo.email?.let { email ->
+                farmer.contactInfo?.email?.let { email ->
                     Text(
                         text = email,
                         fontSize = 14.sp,
@@ -327,9 +327,9 @@ private fun FarmerProfileCard(
 
                 Text(
                     text = buildString {
-                        append(farmer.contactInfo.address!!.district)
+                        append(farmer.contactInfo?.address?.district ?: "")
                         append(", ")
-                        append(farmer.contactInfo.address!!.region)
+                        append(farmer.contactInfo?.address?.region ?: "")
                     },
                     fontSize = 14.sp,
                     color = colorScheme.onSurfaceVariant

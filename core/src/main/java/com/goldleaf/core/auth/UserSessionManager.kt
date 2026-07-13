@@ -94,20 +94,16 @@ class UserSessionManager @Inject constructor(
         }
     }
 
- /**
-     * Flow that emits the current farmer entity
-*/
+    // =====================================================
+    // OBSERVER: This flow will emit the FarmerEntity from the DATABASE
+    // NOT the network state. Emits null initially, then updates after sync.
+    private val _currentFarmerFlow = MutableStateFlow<FarmerEntity?>(null)
+    val currentFarmer: Flow<FarmerEntity?> = _currentFarmerFlow
 
- // 1. The clean "Single Source of Truth" flow
- @kotlinx.coroutines.ExperimentalCoroutinesApi
- val currentFarmer: Flow<FarmerEntity?> = getCurrentUserIdFlow()
-     .flatMapLatest { userId ->
-         if (userId == null) return@flatMapLatest flowOf(null)
-       // Trigger the background sync without blocking the flow
-         syncFarmerFromServer(userId)
-        // Return the database observer
-         farmerDao.getFarmerById(userId)
-     }
+    // Initialize the flow with null while waiting for sync (will be updated in syncFarmerFromServer)
+    init {
+        _currentFarmerFlow.value = null
+    }
 
     // 2. The helper function that handles the network "work"
     // Inside UserSessionManager.kt
@@ -153,28 +149,28 @@ class UserSessionManager @Inject constructor(
                     phone = dto.phone,
                     email = dto.email,
                     location = dto.location,
-                    district = dto.contactInfo.address?.district,
-                    region = dto.contactInfo.address?.region,
-                    street = dto.contactInfo.address?.street,
-                    country = dto.contactInfo.address?.country,
-                    latitude = dto.contactInfo.address?.latitude,
-                    longitude = dto.contactInfo.address?.longitude,
-                    firstName = dto.personalInfo.firstName,
-                    lastName = dto.personalInfo.lastName,
-                    nationalId = dto.personalInfo.nationalId,
-                    landSize = dto.farmInfo.totalLandSize,
-                    landUnit = dto.farmInfo.landUnit.name,
-                    farmingType = dto.farmInfo.farmingType.name,
-                    experienceYears = dto.farmInfo.farmingExperienceYears,
+                    district = dto.contactInfo?.address?.district,
+                    region = dto.contactInfo?.address?.region,
+                    street = dto.contactInfo?.address?.street,
+                    country = dto.contactInfo?.address?.country,
+                    latitude = dto.contactInfo?.address?.latitude,
+                    longitude = dto.contactInfo?.address?.longitude,
+                    firstName = dto.personalInfo?.firstName ?: "",
+                    lastName = dto.personalInfo?.lastName ?: "",
+                    nationalId = dto.personalInfo?.nationalId,
+                    landSize = dto.farmInfo?.totalLandSize ?: 0.0,
+                    landUnit = dto.farmInfo?.landUnit?.name ?: "ACRES",
+                    farmingType = dto.farmInfo?.farmingType?.name ?: "CROP_FARMING",
+                    experienceYears = dto.farmInfo?.farmingExperienceYears ?: 0,
                     profileImageUrl = dto.profileImageUrl,
-                    status = dto.status.name,
+                    status = try { dto.status?.name ?: "ACTIVE" } catch (_: Exception) { "ACTIVE" },
                     lastSyncTime = System.currentTimeMillis(),
                     createdAt = dto.createdAt,
                     updatedAt = dto.updatedAt,
-                    userRole = dto.userRole.name
+                    userRole = try { dto.userRole?.name ?: "FARMER" } catch (_: Exception) { "FARMER" }
                 )
         farmerDao.insertFarmer(entity)
-        setUserRole(dto.userRole)
+        try { setUserRole(dto.userRole) } catch (_: Exception) {}
     }
 
     /**

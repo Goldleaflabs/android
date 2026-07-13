@@ -67,7 +67,7 @@ class ProfileViewModel @Inject constructor(
                         val farms = farmerRepository.getFarmerFarms(farmer.id).firstOrNull() ?: emptyList()
 
                         // Resolve display location: from stored coordinates or text fields
-                        val address = farmer.contactInfo.address
+                        val address = farmer.contactInfo?.address
                         var displayLocation = ""
                         var storedLat = address?.latitude
                         var storedLng = address?.longitude
@@ -93,17 +93,17 @@ class ProfileViewModel @Inject constructor(
                             isLoading = false,
                             farmer = FarmerProfile(
                                 id = farmer.id,
-                                name = farmer.personalInfo.fullName,
-                                email = farmer.contactInfo.email ?: "",
-                                phone = farmer.contactInfo.primaryPhone,
+                                name = farmer.personalInfo?.fullName ?: farmer.name,
+                                email = farmer.contactInfo?.email ?: "",
+                                phone = farmer.contactInfo?.primaryPhone ?: farmer.phone,
                                 profileImage = farmer.profileImageUrl,
                                 location = displayLocation,
-                                totalFarmSize = farmer.farmInfo.totalLandSize,
+                                totalFarmSize = farmer.farmInfo?.totalLandSize ?: 0.0,
                                 memberSince = farmer.registrationDate.toString().substringBefore("T")
                             ),
                             totalFarms = farms.size,
                             activeCrops = farmer.totalCrops,
-                            primaryCrops = farmer.farmInfo.mainCrops,
+                            primaryCrops = farmer.farmInfo?.mainCrops ?: emptyList(),
                             gpsLatitude = storedLat,
                             gpsLongitude = storedLng
                         )}
