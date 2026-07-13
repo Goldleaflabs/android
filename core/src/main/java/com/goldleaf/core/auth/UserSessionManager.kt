@@ -94,16 +94,13 @@ class UserSessionManager @Inject constructor(
         }
     }
 
-    // =====================================================
-    // OBSERVER: This flow will emit the FarmerEntity from the DATABASE
-    // NOT the network state. Emits null initially, then updates after sync.
-    private val _currentFarmerFlow = MutableStateFlow<FarmerEntity?>(null)
-    val currentFarmer: Flow<FarmerEntity?> = _currentFarmerFlow
-
-    // Initialize the flow with null while waiting for sync (will be updated in syncFarmerFromServer)
-    init {
-        _currentFarmerFlow.value = null
-    }
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    val currentFarmer: Flow<FarmerEntity?> = currentUserId
+        .flatMapLatest { userId ->
+            if (userId == null) return@flatMapLatest flowOf(null)
+            syncFarmerFromServer(userId)
+            farmerDao.getFarmerById(userId)
+        }
 
     // 2. The helper function that handles the network "work"
     // Inside UserSessionManager.kt
